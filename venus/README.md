@@ -1,3 +1,4 @@
+```lua
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/vozoid/ui-libraries/main/venus/source.lua", true))()
 
 local main = library:Load({Name = "Venus Library", Theme = "Dark", SizeX = 440, SizeY = 480, ColorOverrides = {}})
@@ -74,4 +75,4 @@ print(library.Flags["ToggleColorPicker"])
 
 -- colorPickerToggle:Toggle(bool)
 -- colorPickerToggle:SetHex(hex)
--- colorPickerToggle:SetRGB(rgb Color3)
+-- colorPickerToggle:SetRGB(rgb Color3)```
