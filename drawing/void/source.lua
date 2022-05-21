@@ -1644,10 +1644,6 @@ function library.createcolorpicker(default, parent, count, flag, callback)
             text.Text = string.format("%s, %s, %s", math.round(hsv.R * 255), math.round(hsv.G * 255), math.round(hsv.B * 255))
         end
     end)
-    
-    icon.MouseButton1Click:Connect(function()
-        window.Visible = not window.Visible
-    end)
 
     local function updatesatval(input)
         local sizeX = math.clamp((input.Position.X - saturation.AbsolutePosition.X) / saturation.AbsoluteSize.X, 0, 1)
@@ -1712,6 +1708,18 @@ function library.createcolorpicker(default, parent, count, flag, callback)
             if slidinghue then
                 updatehue(input)
             end
+        end
+    end)
+
+    icon.MouseButton1Click:Connect(function()
+        window.Visible = not window.Visible
+
+        if slidinghue then
+            slidinghue = false
+        end
+
+        if slidingsaturation then
+            slidingsaturation = false
         end
     end)
 
