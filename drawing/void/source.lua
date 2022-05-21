@@ -2000,7 +2000,7 @@ function library:Load(options)
         Parent = tabholder
     })
 
-    local windowtypes = utility.table({tabtoggles = {}, tabtoggleoutlines = {}, tabs = {}, tabtoggletitles = {}}, true)
+    local windowtypes = utility.table({tabtoggles = {}, tabtoggleoutlines = {}, tabs = {}, tabtoggletitles = {}, count = 0}, true)
 
     function windowtypes:Tab(name)
         local tabtoggle = utility.create("Square", {
@@ -2043,6 +2043,13 @@ function library:Load(options)
             Position = UDim2.new(0, 8, 0, 8)
         })
 
+        table.insert(self.tabs, tab)
+
+        task.spawn(function()
+            task.wait()
+            tab.Visible = tab.Visible
+        end)
+        
         local column1 = utility.create("Square", {
             Transparency = 0,
             Parent = tab,
@@ -2061,8 +2068,6 @@ function library:Load(options)
 
         column2:AddListLayout(12)
         column2:MakeScrollable()
-
-        table.insert(self.tabs, tab)
 
         local mouseover = false
 
