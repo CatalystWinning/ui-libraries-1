@@ -2123,7 +2123,7 @@ function library:Load(options)
             local section = utility.create("Square", {
                 Filled = true,
                 Thickness = 0,
-                Size = UDim2.new(1, 0, 0, 28),
+                Size = UDim2.new(1, 0, 0, 31),
                 Parent = column,
                 Theme = "Section Background",
                 ZIndex = 6
@@ -2145,7 +2145,7 @@ function library:Load(options)
             local sectioncontent = utility.create("Square", {
                 Transparency = 0,
                 Size = UDim2.new(1, -16, 1, -28),
-                Position = UDim2.new(0, 8, 0, 18),
+                Position = UDim2.new(0, 8, 0, 20),
                 Parent = section
             })
 
@@ -2171,7 +2171,7 @@ function library:Load(options)
                     Parent = label,
                 })
 
-                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 26)
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
             end
 
             function sectiontypes:Button(options)
@@ -2210,7 +2210,7 @@ function library:Load(options)
                     Parent = button
                 })
 
-                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 26)
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
                 local mouseover = false
 
@@ -2280,7 +2280,7 @@ function library:Load(options)
                     Parent = holder
                 })
 
-                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 26)
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
                 local mouseover = false
                 local toggled = false
@@ -2432,7 +2432,7 @@ function library:Load(options)
                     Parent = box
                 })
 
-                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 26)
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
                 box.MouseEnter:Connect(function()
                     mouseover = true
@@ -2562,7 +2562,7 @@ function library:Load(options)
                     Parent = slider
                 })
 
-                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 26)
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
                 local function set(value)
                     value = math.clamp(utility.round(value, float), min, max)
@@ -2763,7 +2763,7 @@ function library:Load(options)
 
                 contentholder:AddListLayout(3)
 
-                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 26)
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
                 local mouseover = false
 
@@ -3114,7 +3114,7 @@ function library:Load(options)
                     Parent = holder
                 })
 
-                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 26)
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
                 
                 local colorpickertypes = library.createcolorpicker(default, holder, 0, flag, callback)
 
@@ -3160,7 +3160,7 @@ function library:Load(options)
                     Parent = holder
                 })
 
-                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 26)
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
                 return library.createkeybind(default, holder, blacklist, flag, callback)
             end
