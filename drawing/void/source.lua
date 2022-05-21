@@ -2617,6 +2617,21 @@ function library:Load(options)
                         slider.Color = mouseover and utility.changecolor(library.theme["Object Background"], 3) or library.theme["Object Background"]
                     end
                 end)
+
+                utility.connect(fill.InputBegan, function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        sliding = true
+                        slider.Color = utility.changecolor(library.theme["Object Background"], 6)
+                        slide(input)
+                    end
+                end)
+            
+                utility.connect(fill.InputEnded, function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        sliding = false
+                        slider.Color = mouseover and utility.changecolor(library.theme["Object Background"], 3) or library.theme["Object Background"]
+                    end
+                end)
             
                 utility.connect(services.InputService.InputChanged, function(input)
                     if input.UserInputType == Enum.UserInputType.MouseMovement then
