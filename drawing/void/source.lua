@@ -1700,12 +1700,12 @@ function library.createcolorpicker(default, parent, count, flag, callback, picke
         hsv = Color3.fromHSV(hue, sat, val)
 
         if hsv ~= oldcolor then
-            saturation.Color = hsv
             icon.Color = hsv
 
             if not nopos then
                 saturationpicker.Position = UDim2.new(0, (math.clamp(sat * saturation.AbsoluteSize.X, 0, saturation.AbsoluteSize.X - 4)), 0, (math.clamp((1 - val) * saturation.AbsoluteSize.Y, 0, saturation.AbsoluteSize.Y - 4)))
                 huepicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - hue) * saturation.AbsoluteSize.Y, 0, saturation.AbsoluteSize.Y - 4))
+                saturation.Color = hsv
             end
 
             text.Text = string.format("%s, %s, %s", math.round(hsv.R * 255), math.round(hsv.G * 255), math.round(hsv.B * 255))
@@ -1775,14 +1775,6 @@ function library.createcolorpicker(default, parent, count, flag, callback, picke
         end
     end)
 
-    services.InputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            if slidingsaturation then
-                updatesatval(input)
-            end
-        end
-    end)
-
     local slidinghue = false
 
     local function updatehue(input)
@@ -1790,6 +1782,7 @@ function library.createcolorpicker(default, parent, count, flag, callback, picke
         local posY = math.clamp(((input.Position.Y - hueframe.AbsolutePosition.Y) / hueframe.AbsoluteSize.Y) * hueframe.AbsoluteSize.Y + 36, 0, hueframe.AbsoluteSize.Y - 2)
 
         huepicker.Position = UDim2.new(0, 0, 0, posY)
+        saturation.Color = Color3.fromHSV(sizeY, 1, 1)
         curhuesizey = sizeY
 
         set(Color3.fromHSV(sizeY, sat, val), true)
@@ -1808,10 +1801,14 @@ function library.createcolorpicker(default, parent, count, flag, callback, picke
         end
     end)
 
-    services.InputService.InputChanged:Connect(function(input)
+    utility.connect(services.InputService.InputChanged, function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
             if slidinghue then
                 updatehue(input)
+            end
+
+            if slidingsaturation then
+                updatesatval(input)
             end
         end
     end)
