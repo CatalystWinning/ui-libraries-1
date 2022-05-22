@@ -216,8 +216,8 @@ local drawing = {} do
     services.InputService.InputEnded:Connect(function(input, gpe)
         for obj, signals in next, objsignals do
             if objexists[obj] then
-                if signals.inputbegan then
-                    signals.inputbegan = false
+                if signals.inputbegan[input] then
+                    signals.inputbegan[input] = false
 
                     if signals.InputEnded then
                         signals.InputEnded:Fire(input, gpe)
@@ -287,7 +287,7 @@ local drawing = {} do
             if objexists[obj] then
                 if obj.Visible then
                     if ismouseover(obj) and not mouseoverhighersquare(obj) then 
-                        signals.inputbegan = true
+                        signals.inputbegan[input] = true
 
                         if signals.InputBegan then
                             signals.InputBegan:Fire(input, gpe)
@@ -576,9 +576,9 @@ local drawing = {} do
                         objsignals[obj][k] = signalnames[k]
                     end
 
-                    objsignals[obj].inputbegan = objsignals[obj].inputbegan or false
-                    objsignals[obj].mouseentered = objsignals[obj].mouseentered or false
-                    objsignals[obj].mouse1down = objsignals[obj].mouse1down or false
+                    objsignals[obj].inputbegan = objsignals[obj].inputbegan or {}
+                    objsignals[obj].mouseentered = objsignals[obj].mouseentered or {}
+                    objsignals[obj].mouse1down = objsignals[obj].mouse1down or {}
 
                     return signalnames[k]
                 end
@@ -1688,30 +1688,35 @@ function library.createcolorpicker(default, parent, count, flag, callback, picke
 
     local hue, sat, val = default:ToHSV()
     local hsv = default:ToHSV()
+    local oldcolor = hsv
 
     local function set(color, nopos)
         if type(color) == "string" then
             color = utility.hextorgb(color)
         end
 
+        local oldcolor = hsv
+
         hue, sat, val = color:ToHSV()
         hsv = Color3.fromHSV(hue, sat, val)
 
-        saturation.Color = hsv
-        icon.Color = hsv
+        if hsv ~= oldcolor then
+            saturation.Color = hsv
+            icon.Color = hsv
 
-        if not nopos then
-            saturationpicker.Position = UDim2.new(0, (math.clamp(sat * saturation.AbsoluteSize.X, 0, saturation.AbsoluteSize.X - 4)), 0, (math.clamp((1 - val) * saturation.AbsoluteSize.Y, 0, saturation.AbsoluteSize.Y - 4)))
-            huepicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - hue) * saturation.AbsoluteSize.Y, 0, saturation.AbsoluteSize.Y - 4))
+            if not nopos then
+                saturationpicker.Position = UDim2.new(0, (math.clamp(sat * saturation.AbsoluteSize.X, 0, saturation.AbsoluteSize.X - 4)), 0, (math.clamp((1 - val) * saturation.AbsoluteSize.Y, 0, saturation.AbsoluteSize.Y - 4)))
+                huepicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - hue) * saturation.AbsoluteSize.Y, 0, saturation.AbsoluteSize.Y - 4))
+            end
+
+            text.Text = string.format("%s, %s, %s", math.round(hsv.R * 255), math.round(hsv.G * 255), math.round(hsv.B * 255))
+
+            if flag then 
+                library.flags[flag] = Color3.fromRGB(hsv.r * 255, hsv.g * 255, hsv.b * 255)
+            end
+
+            callback(Color3.fromRGB(hsv.r * 255, hsv.g * 255, hsv.b * 255))
         end
-
-        text.Text = string.format("%s, %s, %s", math.round(hsv.R * 255), math.round(hsv.G * 255), math.round(hsv.B * 255))
-
-        if flag then 
-            library.flags[flag] = Color3.fromRGB(hsv.r * 255, hsv.g * 255, hsv.b * 255)
-        end
-
-        callback(Color3.fromRGB(hsv.r * 255, hsv.g * 255, hsv.b * 255))
     end
 
     flags[flag] = set
@@ -3336,4 +3341,3 @@ function library:Load(options)
 end
 
 return library
-
