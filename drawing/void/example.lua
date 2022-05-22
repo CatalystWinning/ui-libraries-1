@@ -19,7 +19,9 @@ local section = tab:Section{
     Side = "Left"
 }
 
-section:Label("Label")
+local label = section:Label("Label")
+
+--label:Set("Label Set")
 
 section:Button{
     Name = "Button",
