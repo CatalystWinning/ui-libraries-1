@@ -242,7 +242,7 @@ local themelist = themes:Dropdown{
     Flag = "Theme Dropdown",
     Callback = function(option)
         if option then
-            library:SetTheme(option:lower())
+            library:SetTheme(option)
 
             for option, picker in next, themepickers do
                 picker:Set(library.theme[option])
