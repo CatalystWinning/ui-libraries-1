@@ -2287,7 +2287,7 @@ function library:Load(options)
                     Parent = sectioncontent
                 })
 
-                utility.create("Text", {
+                local text = utility.create("Text", {
                     Text = name,
                     Font = Drawing.Fonts.Plex,
                     Size = 13,
@@ -2299,6 +2299,14 @@ function library:Load(options)
                 })
 
                 section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
+
+                local labeltypes = utility.table({}, true)
+
+                function labeltypes:Set(str)
+                    text.Text = str
+                end
+
+                return labeltypes
             end
 
             function sectiontypes:Button(options)
@@ -3328,3 +3336,4 @@ function library:Load(options)
 end
 
 return library
+
