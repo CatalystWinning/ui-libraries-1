@@ -946,7 +946,6 @@ function utility.dragify(object, dragoutline)
             dragging = true
             start = input.Position
             dragoutline.Visible = true
-            print(dragoutline.Visible)
             objectposition = object.Position
         end
     end)
