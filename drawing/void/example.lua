@@ -440,6 +440,7 @@ local delconfig = configsection:Button{
     Name = "Delete Config",
     Callback = function()
         library:DeleteConfig(library.flags["Config Dropdown"]) -- DeleteConfig(library.flags["Config Dropdown"], true)  if you want universal configs
+        configlist:Refresh(library:GetConfigs())
     end
 }
 
