@@ -1520,7 +1520,7 @@ function library.createbox(box, text, callback, finishedcallback)
     end)
 end
 
-function library.createcolorpicker(default, parent, count, flag, callback)
+function library.createcolorpicker(default, parent, count, flag, callback, pickers)
     local icon = utility.create("Square", {
         Filled = true,
         Thickness = 0,
@@ -1719,6 +1719,10 @@ function library.createcolorpicker(default, parent, count, flag, callback)
 
     set(default)
 
+    local defhue, _, _ = default:ToHSV()
+
+    local curhuesizey = defhue
+
     library.createbox(rgbinput, text, function(str) 
         if str == "" then
             text.Visible = false
@@ -1750,7 +1754,7 @@ function library.createcolorpicker(default, parent, count, flag, callback)
 
         saturationpicker.Position = UDim2.new(0, posX, 0, posY)
 
-        set(Color3.fromHSV(hue, sizeX, sizeY), true)
+        set(Color3.fromHSV(curhuesizey or hue, sizeX, sizeY), true)
     end
 
     local slidingsaturation = false
@@ -1783,6 +1787,7 @@ function library.createcolorpicker(default, parent, count, flag, callback)
         local posY = math.clamp(((input.Position.Y - hueframe.AbsolutePosition.Y) / hueframe.AbsoluteSize.Y) * hueframe.AbsoluteSize.Y + 36, 0, hueframe.AbsoluteSize.Y - 2)
 
         huepicker.Position = UDim2.new(0, 0, 0, posY)
+        curhuesizey = sizeY
 
         set(Color3.fromHSV(sizeY, sat, val), true)
     end
@@ -1809,6 +1814,12 @@ function library.createcolorpicker(default, parent, count, flag, callback)
     end)
 
     icon.MouseButton1Click:Connect(function()
+        for _, picker in next, pickers do
+            if picker ~= window then
+                picker.Visible = false
+            end
+        end
+
         window.Visible = not window.Visible
 
         if slidinghue then
@@ -1826,7 +1837,7 @@ function library.createcolorpicker(default, parent, count, flag, callback)
         set(color)
     end
 
-    return colorpickertypes
+    return colorpickertypes, window
 end
 
 local keys = {
@@ -2472,6 +2483,7 @@ function library:Load(options)
                 end
 
                 local colorpickers = 0
+                local colorpickerstbl = {}
 
                 function toggletypes:ColorPicker(options)
                     utility.table(options)
@@ -2479,7 +2491,9 @@ function library:Load(options)
                     local callback = options.callback or function() end
                     local default = options.default or Color3.fromRGB(255, 255, 255)
 
-                    local colorpicker = library.createcolorpicker(default, holder, colorpickers, flag, callback)
+                    local colorpicker, window = library.createcolorpicker(default, holder, colorpickers, flag, callback, colorpickerstbl)
+
+                    table.insert(colorpickerstbl, window)
 
                     colorpickers = colorpickers + 1
 
@@ -3247,8 +3261,12 @@ function library:Load(options)
                 })
 
                 section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
+
+                local colorpickertbl = {}
                 
-                local colorpickertypes = library.createcolorpicker(default, holder, 0, flag, callback)
+                local colorpickertypes, window = library.createcolorpicker(default, holder, 0, flag, callback, colorpickertbl)
+
+                table.insert(colorpickertbl, window)
 
                 local colorpickers = 0
 
@@ -3260,7 +3278,11 @@ function library:Load(options)
                     local flag = options.flag or utility.nextflag()
                     local callback = options.callback or function() end
 
-                    return library.createcolorpicker(default, holder, colorpickers, flag, callback)
+                    local types, window = library.createcolorpicker(default, holder, colorpickers, flag, callback, colorpickertbl)
+
+                    table.insert(colorpickertbl, window)
+
+                    return types
                 end
 
                 return colorpickertypes
