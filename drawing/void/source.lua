@@ -8,66 +8,132 @@ local drawing = {} do
         end
     })
 
-    local signal = {}
-    function signal.new()
-        local callbacks = {}
+    -- taken from Nevermore Engine https://github.com/Quenty/NevermoreEngine/tree/main/src
 
-        local tbl
+    local HttpService = game:GetService("HttpService")
 
-        tbl = {
-            connect = function(self, func)
-                table.insert(callbacks, func)
-                
-                return setmetatable({
-                    disconnect = function()
-                        table.remove(callbacks, table.find(callbacks, func))
-                    end
-                }, {
-                    __index = function(self, k)
-                        return rawget(self, k:lower())
-                    end
-                })
-            end,
-            
-            fire = function(self, ...)
-                for _, callback in next, callbacks do
-                    coroutine.wrap(function(...)
-                        callback(...)
-                    end)(...)
-                end
-            end,
-            
-            wait = function(self)
-                local done = false
-                
-                local connection = self:connect(function()
-                    done = true
-                end)
-                
-                repeat task.wait() until done
-                connection:disconnect()
-            end,
-            
-            destroy = function()
-                table.clear(tbl)
-            end
-        }
+    local ENABLE_TRACEBACK = false
 
-        local userdata = newproxy(true)
-        local mt = getmetatable(userdata)
+    local Signal = {}
+    Signal.__index = Signal
+    Signal.ClassName = "Signal"
 
-        mt.__index = function(_, k)
-            return rawget(tbl, k:lower())
-        end
-
-        mt.__metatable = "This metatable is locked"
-
-        mt.__tostring = function()
-            return "vozoid signal lib"
-        end
-
-        return userdata
+    --[=[
+        Returns whether a class is a signal
+        @param value any
+        @return boolean
+    ]=]
+    function Signal.isSignal(value)
+        return type(value) == "table"
+            and getmetatable(value) == Signal
     end
+
+    --[=[
+        Constructs a new signal.
+        @return Signal<T>
+    ]=]
+    function Signal.new()
+        local self = setmetatable({}, Signal)
+
+        self._bindableEvent = Instance.new("BindableEvent")
+        self._argMap = {}
+        self._source = ENABLE_TRACEBACK and debug.traceback() or ""
+
+        -- Events in Roblox execute in reverse order as they are stored in a linked list and
+        -- new connections are added at the head. This event will be at the tail of the list to
+        -- clean up memory.
+        self._bindableEvent.Event:Connect(function(key)
+            self._argMap[key] = nil
+
+            -- We've been destroyed here and there's nothing left in flight.
+            -- Let's remove the argmap too.
+            -- This code may be slower than leaving this table allocated.
+            if (not self._bindableEvent) and (not next(self._argMap)) then
+                self._argMap = nil
+            end
+        end)
+
+        return self
+    end
+
+    --[=[
+        Fire the event with the given arguments. All handlers will be invoked. Handlers follow
+        @param ... T -- Variable arguments to pass to handler
+    ]=]
+    function Signal:Fire(...)
+        if not self._bindableEvent then
+            warn(("Signal is already destroyed. %s"):format(self._source))
+            return
+        end
+
+        local args = table.pack(...)
+
+        -- TODO: Replace with a less memory/computationally expensive key generation scheme
+        local key = HttpService:GenerateGUID(false)
+        self._argMap[key] = args
+
+        -- Queues each handler onto the queue.
+        self._bindableEvent:Fire(key)
+    end
+
+    --[=[
+        Connect a new handler to the event. Returns a connection object that can be disconnected.
+        @param handler (... T) -> () -- Function handler called when `:Fire(...)` is called
+        @return RBXScriptConnection
+    ]=]
+    function Signal:Connect(handler)
+        if not (type(handler) == "function") then
+            error(("connect(%s)"):format(typeof(handler)), 2)
+        end
+
+        return self._bindableEvent.Event:Connect(function(key)
+            -- note we could queue multiple events here, but we'll do this just as Roblox events expect
+            -- to behave.
+
+            local args = self._argMap[key]
+            if args then
+                handler(table.unpack(args, 1, args.n))
+            else
+                error("Missing arg data, probably due to reentrance.")
+            end
+        end)
+    end
+
+    --[=[
+        Wait for fire to be called, and return the arguments it was given.
+        @yields
+        @return T
+    ]=]
+    function Signal:Wait()
+        local key = self._bindableEvent.Event:Wait()
+        local args = self._argMap[key]
+        if args then
+            return table.unpack(args, 1, args.n)
+        else
+            error("Missing arg data, probably due to reentrance.")
+            return nil
+        end
+    end
+
+    --[=[
+        Disconnects all connected events to the signal. Voids the signal as unusable.
+        Sets the metatable to nil.
+    ]=]
+    function Signal:Destroy()
+        if self._bindableEvent then
+            -- This should disconnect all events, but in-flight events should still be
+            -- executed.
+
+            self._bindableEvent:Destroy()
+            self._bindableEvent = nil
+        end
+
+        -- Do not remove the argmap. It will be cleaned up by the cleanup connection.
+
+        setmetatable(self, nil)
+    end
+
+    local signal = Signal
 
     local function ismouseover(obj)
         local posX, posY = obj.Position.X, obj.Position.Y
@@ -134,6 +200,8 @@ local drawing = {} do
     local childrenposupdates = {}
     local childrenvisupdates = {}
     local squares = {}
+    local objsignals = {}
+    local objexists = {}
 
     local function mouseoverhighersquare(obj)
         for _, square in next, squares do
@@ -145,8 +213,108 @@ local drawing = {} do
         end
     end
 
+    services.InputService.InputEnded:Connect(function(input, gpe)
+        for obj, signals in next, objsignals do
+            if objexists[obj] then
+                if signals.inputbegan then
+                    signals.inputbegan = false
+
+                    if signals.InputEnded then
+                        signals.InputEnded:Fire(input, gpe)
+                    end
+                end
+
+                if obj.Visible then
+                    if ismouseover(obj) then
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 and not mouseoverhighersquare(obj) then
+                            if signals.MouseButton1Up then
+                                signals.MouseButton1Up:Fire()
+                            end
+
+                            if signals.mouse1down and signals.MouseButton1Click then
+                                signals.mouse1down = false
+                                signals.MouseButton1Click:Fire()
+                            end
+                        end
+
+                        if input.UserInputType == Enum.UserInputType.MouseButton2 and not mouseoverhighersquare(obj) then
+                            if signals.MouseButton2Clicked then
+                                signals.MouseButton2Clicked:Fire()
+                            end
+
+                            if signals.MouseButton2Up then
+                                signals.MouseButton2Up:Fire()
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    services.InputService.InputChanged:Connect(function(input, gpe)
+        for obj, signals in next, objsignals do
+            if objexists[obj] then
+                if ismouseover(obj) and obj.Visible then
+                    if not signals.mouseentered then
+                        signals.mouseentered = true
+
+                        if signals.MouseEnter then
+                            signals.MouseEnter:Fire(input.Position)
+                        end
+
+                        if signals.MouseMoved then
+                            signals.MouseMoved:Fire(input.Position)
+                        end
+                    end
+
+                    if signals.InputChanged then
+                        signals.InputChanged:Fire(input, gpe)
+                    end
+                elseif signals.mouseentered then
+                    signals.mouseentered = false
+
+                    if signals.MouseLeave then
+                        signals.MouseLeave:Fire(input.Position)
+                    end
+                end
+            end
+        end
+    end)
+
+    services.InputService.InputBegan:Connect(function(input, gpe)
+        for obj, signals in next, objsignals do
+            if objexists[obj] then
+                if obj.Visible then
+                    if ismouseover(obj) and not mouseoverhighersquare(obj) then 
+                        signals.inputbegan = true
+
+                        if signals.InputBegan then
+                            signals.InputBegan:Fire(input, gpe)
+                        end
+
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 and (not mouseoverhighersquare(obj) or obj.Transparency == 0) then
+                            signals.mouse1down = true
+
+                            if signals.MouseButton1Down then
+                                signals.MouseButton1Down:Fire()
+                            end
+                        end
+
+                        if input.UserInputType == Enum.UserInputType.MouseButton2 and (not mouseoverhighersquare(obj) or obj.Transparency == 0) then
+                            if signals.MouseButton2Down then
+                                signals.MouseButton2Down:Fire()
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
     function drawing:new(shape)
         local obj = Drawing.new(shape)
+        objexists[obj] = true
         local signalnames = {}
 
         local listfunc
@@ -157,104 +325,20 @@ local drawing = {} do
         if shape == "Square" then
             table.insert(squares, obj)
 
-            local leftclicked = signal.new()
-            local leftbuttonup = signal.new()
-            local leftbuttondown = signal.new()
-            local rightclicked = signal.new()
-            local rightbuttonup = signal.new()
-            local rightbuttondown = signal.new()
-            local inputbegan = signal.new()
-            local inputended = signal.new()
-            local inputchanged = signal.new()
-            local mouseenter = signal.new()
-            local mouseleave = signal.new()
-            local mousemoved = signal.new()
-
             signalnames = {
-                MouseButton1Click = leftclicked,
-                MouseButton1Up = leftbuttonup,
-                MouseButton1Down = leftbuttondown,
-                MouseButton2Click = rightclicked,
-                MouseButton2Up = rightbuttonup,
-                MouseButton2Down = rightbuttondown,
-                InputBegan = inputbegan,
-                InputEnded = inputended,
-                InputChanged = inputchanged,
-                MouseEnter = mouseenter,
-                MouseLeave = mouseleave,
-                MouseMoved = mousemoved
+                MouseButton1Click = signal.new(),
+                MouseButton1Up = signal.new(),
+                MouseButton1Down = signal.new(),
+                MouseButton2Click = signal.new(),
+                MouseButton2Up = signal.new(),
+                MouseButton2Down = signal.new(),
+                InputBegan = signal.new(),
+                InputEnded = signal.new(),
+                InputChanged = signal.new(),
+                MouseEnter = signal.new(),
+                MouseLeave = signal.new(),
+                MouseMoved = signal.new()
             }
-
-            local isinputbegan = false
-            local mouseentered = false
-            local mouse1down = false
-
-            local con1 = services.InputService.InputEnded:Connect(function(input, gpe)
-                if isinputbegan then
-                    isinputbegan = false
-                    inputended:Fire(input, gpe)
-                end
-
-                if obj.Visible then
-                    if ismouseover(obj) then
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 and not mouseoverhighersquare(obj) then
-                            leftbuttonup:Fire()
-
-                            if mouse1down then
-                                mouse1down = false
-                                leftclicked:Fire()
-                            end
-                        end
-
-                        if input.UserInputType == Enum.UserInputType.MouseButton2 and not mouseoverhighersquare(obj) then
-                            rightclicked:Fire()
-                            rightbuttonup:Fire()
-                        end
-                    end
-                end
-            end)
-
-            local con2 = services.InputService.InputChanged:Connect(function(input, gpe)
-                if ismouseover(obj) then
-                    if obj.Visible then
-                        if not mouseentered then
-                            mouseentered = true
-                            mouseenter:Fire(input.Position)
-                            mousemoved:Fire(input.Position)
-                        end
-
-                        inputchanged:Fire(input, gpe)
-                    elseif mouseentered then
-                        mouseentered = false
-                        mouseleave:Fire(input.Position)
-                    end
-                elseif mouseentered then
-                    mouseentered = false
-                    mouseleave:Fire(input.Position)
-                end
-            end)
-
-            local con3 = services.InputService.InputBegan:Connect(function(input, gpe)
-                if obj.Visible == true then
-                    if ismouseover(obj) and not mouseoverhighersquare(obj) then 
-                        isinputbegan = true
-                        inputbegan:Fire(input, gpe)
-
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 and (not mouseoverhighersquare(obj) or obj.Transparency == 0) then
-                            mouse1down = true
-                            leftbuttondown:Fire()
-                        end
-
-                        if input.UserInputType == Enum.UserInputType.MouseButton2 and (not mouseoverhighersquare(obj) or obj.Transparency == 0) then
-                            rightbuttondown:Fire()
-                        end
-                    end
-                end
-            end)
-            
-            table.insert(objconnections[obj], con1)
-            table.insert(objconnections[obj], con2)
-            table.insert(objconnections[obj], con3)
 
             local attemptedscrollable = false
 
@@ -448,6 +532,7 @@ local drawing = {} do
                 if k == "Remove" then
                     return function(self)
                         rawset(self, "exists", false)
+                        objexists[obj] = false
 
                         if customproperties.Parent and listobjs[customproperties.Parent] then
                             local objindex = table.find(objchildren[customproperties.Parent], obj)
@@ -475,22 +560,30 @@ local drawing = {} do
                         end
                         
                         for _, object in next, objchildren[self] do
-                            for _, con in next, objconnections[object] do
-                                con:Disconnect()
-                            end
-
+                            table.remove(objsignals, table.find(objsignals, object))
                             objmts[object]:Remove()
                         end
 
+                        table.remove(objsignals, table.find(objsignals, obj))
                         obj:Remove()
-
-                        for _, con in next, objconnections[obj] do
-                            con:Disconnect()
-                        end
                     end
                 end
 
-                return customproperties[k] or signalnames[k] or obj[k]
+                if signalnames and signalnames[k] then
+                    objsignals[obj] = objsignals[obj] or {}
+                    
+                    if not objsignals[obj][k] then
+                        objsignals[obj][k] = signalnames[k]
+                    end
+
+                    objsignals[obj].inputbegan = objsignals[obj].inputbegan or false
+                    objsignals[obj].mouseentered = objsignals[obj].mouseentered or false
+                    objsignals[obj].mouse1down = objsignals[obj].mouse1down or false
+
+                    return signalnames[k]
+                end
+
+                return customproperties[k] or obj[k]
             end,
 
             __newindex = function(self, k, v)
@@ -845,26 +938,31 @@ local client = services.Players.LocalPlayer
 
 local utility = {}
 
-function utility.dragify(object)
-    local start, objectposition, dragging
+function utility.dragify(object, dragoutline)
+    local start, objectposition, dragging, currentpos
 
     object.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             start = input.Position
+            dragoutline.Visible = true
+            print(dragoutline.Visible)
             objectposition = object.Position
         end
     end)
 
-    object.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then 
-            dragging = false
+    services.InputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+            currentpos = UDim2.new(objectposition.X.Scale, objectposition.X.Offset + (input.Position - start).X, objectposition.Y.Scale, objectposition.Y.Offset + (input.Position - start).Y)
+            dragoutline.Position = currentpos
         end
     end)
 
-    services.InputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then   
-            object.Position = UDim2.new(objectposition.X.Scale, objectposition.X.Offset + (input.Position - start).X, objectposition.Y.Scale, objectposition.Y.Offset + (input.Position - start).Y)
+    services.InputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then 
+            dragging = false
+            dragoutline.Visible = false
+            object.Position = currentpos
         end
     end)
 end 
@@ -1942,7 +2040,6 @@ function library:Load(options)
         Position = utility.getcenter(sizeX, sizeY)
     })
 
-    utility.dragify(holder)
     self.holder = holder
 
     utility.create("Text", {
@@ -1976,6 +2073,27 @@ function library:Load(options)
     local outline = utility.outline(main, "Accent")
 
     utility.outline(outline, "Window Border")
+    
+    local dragoutline = utility.create("Square", {
+        Size = UDim2.new(0, sizeX, 0, sizeY),
+        Position = utility.getcenter(sizeX, sizeY),
+        Filled = false,
+        Thickness = 1,
+        Theme = "Accent",
+        ZIndex = 1,
+        Visible = false,
+    })
+
+    utility.create("Square", {
+        Size = UDim2.new(0, sizeX, 0, sizeY),
+        Filled = false,
+        Thickness = 2,
+        Parent = dragoutline,
+        ZIndex = 0,
+        Theme = "Window Border",
+    })
+    
+    utility.dragify(holder, dragoutline)
 
     local tabholder = utility.create("Square", {
         Size = UDim2.new(1, -16, 1, -52),
