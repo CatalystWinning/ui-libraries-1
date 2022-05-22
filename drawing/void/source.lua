@@ -2518,7 +2518,15 @@ function library:Load(options)
                     local flag = options.flag or utility.nextflag()
                     local callback = options.callback or function() end
 
-                    return library.createkeybind(default, holder, blacklist, flag, callback)
+                    local newcallback = function(key, fromsetting)
+                        if not fromsetting then
+                            set(not toggled)
+                        end
+
+                        callback(key, fromsetting)
+                    end
+
+                    return library.createkeybind(default, holder, blacklist, flag, newcallback)
                 end
 
                 return toggletypes
