@@ -1051,7 +1051,7 @@ function utility.nextflag()
 end
 
 local themes = {
-    default = {
+    Default = {
         ["Accent"] = Color3.fromRGB(113, 93, 133),
         ["Window Background"] = Color3.fromRGB(30, 30, 30),
         ["Window Border"] = Color3.fromRGB(45, 45, 45),
@@ -1067,7 +1067,7 @@ local themes = {
         ["Dropdown Option Background"] = Color3.fromRGB(19, 19, 19)
     },
 
-    midnight = {
+    Midnight = {
         ["Accent"] = Color3.fromRGB(100, 59, 154),
         ["Window Background"] = Color3.fromRGB(30, 30, 36),
         ["Window Border"] = Color3.fromRGB(45, 45, 49),
@@ -1298,8 +1298,7 @@ function library:SetTheme(theme)
     self.currenttheme = theme
 
     if themes[theme] then
-        local theme = table.clone(themes[theme])
-        self.theme = theme
+        self.theme = table.clone(themes[theme])
 
         for object, color in next, themeobjects do
             if rawget(object, "exists") == true then
@@ -2005,13 +2004,13 @@ function library:Load(options)
     local name = options.name
     local sizeX = options.sizex or 500
     local sizeY = options.sizey or 550
-    local theme = options.theme and options.theme:lower() or "default"
+    local theme = options.theme and options.theme or "Default"
     local overrides = options.themeoverrides or {}
     local folder = options.folder
     local extension = options.extension
 
     self.currenttheme = theme
-    self.theme = themes[theme]
+    self.theme = table.clone(themes[theme])
 
     for opt, value in next, overrides do
         self.theme[opt] = value
