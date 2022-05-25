@@ -952,14 +952,14 @@ function utility.dragify(object, dragoutline)
         end
     end)
 
-    services.InputService.InputChanged:Connect(function(input)
+    utility.connect(services.InputService.InputChanged, function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
             currentpos = UDim2.new(objectposition.X.Scale, objectposition.X.Offset + (input.Position - start).X, objectposition.Y.Scale, objectposition.Y.Offset + (input.Position - start).Y)
             dragoutline.Position = currentpos
         end
     end)
 
-    services.InputService.InputEnded:Connect(function(input)
+    utility.connect(services.InputService.InputEnded, function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 and dragging then 
             dragging = false
             dragoutline.Visible = false
@@ -2037,7 +2037,7 @@ function library:Load(options)
 
     services.InputService.MouseIconEnabled = false
 
-    services.RunService.RenderStepped:Connect(function()
+    utility.connect(services.RunService.RenderStepped, function()
         if self.open then
             local mousepos = services.InputService:GetMouseLocation()
             cursor.PointA = mousepos
@@ -3347,4 +3347,3 @@ function library:Load(options)
 end
 
 return library
-
