@@ -560,8 +560,10 @@ local drawing = {} do
                         end
                         
                         for _, object in next, objchildren[self] do
-                            table.remove(objsignals, table.find(objsignals, object))
-                            objmts[object]:Remove()
+                            if objexists[object] then
+                                table.remove(objsignals, table.find(objsignals, object))
+                                objmts[object]:Remove()
+                            end
                         end
 
                         table.remove(objsignals, table.find(objsignals, obj))
@@ -958,7 +960,7 @@ function utility.dragify(object, dragoutline)
     end)
 
     services.InputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then 
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and dragging then 
             dragging = false
             dragoutline.Visible = false
             object.Position = currentpos
@@ -3345,3 +3347,4 @@ function library:Load(options)
 end
 
 return library
+
