@@ -2423,7 +2423,9 @@ function library:Load(options)
 
                 local mouseover = false
                 local toggled = false
-
+library.flags[flag] = toggled
+callback(toggled)
+      
                 holder.MouseEnter:Connect(function()
                     if not toggled then
                         mouseover = true
