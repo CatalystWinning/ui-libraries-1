@@ -676,7 +676,7 @@ local drawing = {} do
                             end
                         else
                             local newpos = udim2tovector2(v, workspace.CurrentCamera.ViewportSize)
-                            objpositions[obj] = Vector2.new(math.floor(newpos.X), math.floor(newpos.Y))
+                            objpositions[obj] = newpos
                             v = udim2tovector2(v, workspace.CurrentCamera.ViewportSize)
                         end
 
@@ -689,7 +689,7 @@ local drawing = {} do
 
                         changechildrenpos(self, v)
                     else
-                        objpositions[obj] = Vector2.new(math.floor(v.X), math.floor(v.Y))
+                        objpositions[obj] = v
 
                         if customproperties.Parent then
                             if listobjs[customproperties.Parent] then
@@ -709,7 +709,7 @@ local drawing = {} do
                         changechildrenpos(self, v)
                     end
 
-                    v = Vector2.new(math.floor(v.X), math.floor(v.Y))
+                    v = v
                 end
 
                 local changechildrenudim2pos
@@ -2423,9 +2423,7 @@ function library:Load(options)
 
                 local mouseover = false
                 local toggled = false
-library.flags[flag] = toggled
-callback(toggled)
-      
+
                 holder.MouseEnter:Connect(function()
                     if not toggled then
                         mouseover = true
