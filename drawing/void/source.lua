@@ -2908,7 +2908,7 @@ function library:Load(options)
                     Theme = "Object Background",
                     Size = UDim2.new(1, 0, 0, 0),
                     Position = UDim2.new(0, 0, 1, 6),
-                    ZIndex = 10,
+                    ZIndex = 12,
                     Parent = dropdown
                 })
 
@@ -2918,7 +2918,7 @@ function library:Load(options)
                 utility.create("Image", {
                     Size = UDim2.new(1, 0, 1, 0),
                     Transparency = 0.5,
-                    ZIndex = 11,
+                    ZIndex = 13,
                     Parent = contentframe,
                     Data = library.gradient
                 })
@@ -2974,7 +2974,7 @@ function library:Load(options)
                         Thickness = 0,
                         Theme = "Dropdown Option Background",
                         Size = UDim2.new(1, 0, 0, 16),
-                        ZIndex = 12,
+                        ZIndex = 14,
                         Parent = contentholder
                     })
 
@@ -2986,7 +2986,7 @@ function library:Load(options)
                         Size = 13,
                         Position = UDim2.new(0, 8, 0, 1),
                         Theme = "Disabled Text",
-                        ZIndex = 13,
+                        ZIndex = 15,
                         Outline = true,
                         Parent = button
                     })
