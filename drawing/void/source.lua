@@ -1521,7 +1521,9 @@ function library.createbox(box, text, callback, finishedcallback)
     end)
 end
 
-function library.createcolorpicker(default, parent, count, flag, callback, pickers)
+local pickers = {}
+
+function library.createcolorpicker(default, parent, count, flag, callback)
     local icon = utility.create("Square", {
         Filled = true,
         Thickness = 0,
@@ -1552,6 +1554,8 @@ function library.createcolorpicker(default, parent, count, flag, callback, picke
         Position = UDim2.new(1, -192 + (count * 18) + (count * 6), 1, 6),
         ZIndex = 11
     })
+
+    table.insert(pickers, window)
 
     utility.outline(window, "Object Border")
 
@@ -2498,22 +2502,17 @@ function library:Load(options)
                     set(bool)
                 end
 
-                local colorpickers = 0
-                local colorpickerstbl = {}
+                local colorpickers = -1
 
                 function toggletypes:ColorPicker(options)
+                    colorpickers = colorpickers + 1
+
                     utility.table(options)
                     local flag = options.flag or utility.nextflag()
                     local callback = options.callback or function() end
                     local default = options.default or Color3.fromRGB(255, 255, 255)
 
-                    local colorpicker, window = library.createcolorpicker(default, holder, colorpickers, flag, callback, colorpickerstbl)
-
-                    table.insert(colorpickerstbl, window)
-
-                    colorpickers = colorpickers + 1
-
-                    return colorpicker
+                    return library.createcolorpicker(default, holder, colorpickers, flag, callback)
                 end
 
                 function toggletypes:Keybind(options)
@@ -3286,13 +3285,9 @@ function library:Load(options)
 
                 section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
-                local colorpickertbl = {}
-                
-                local colorpickertypes, window = library.createcolorpicker(default, holder, 0, flag, callback, colorpickertbl)
-
-                table.insert(colorpickertbl, window)
-
                 local colorpickers = 0
+
+                local colorpickertypes = library.createcolorpicker(default, holder, colorpickers, flag, callback)
 
                 function colorpickertypes:ColorPicker(options)
                     colorpickers = colorpickers + 1
@@ -3302,11 +3297,7 @@ function library:Load(options)
                     local flag = options.flag or utility.nextflag()
                     local callback = options.callback or function() end
 
-                    local types, window = library.createcolorpicker(default, holder, colorpickers, flag, callback, colorpickertbl)
-
-                    table.insert(colorpickertbl, window)
-
-                    return types
+                    return library.createcolorpicker(default, holder, colorpickers, flag, callback)
                 end
 
                 return colorpickertypes
