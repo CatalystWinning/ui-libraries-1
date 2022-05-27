@@ -1051,6 +1051,26 @@ function utility.nextflag()
     return string.format("%.14g", totalunnamedflags)
 end
 
+function utility.rgba(r, g, b, alpha)
+    local rgb = Color3.fromRGB(r, g, b)
+    local mt = table.clone(getrawmetatable(rgb))
+    
+    setreadonly(mt, false)
+    local old = mt.__index
+    
+    mt.__index = function(self, key)
+        if key:lower() == "a" then
+            return alpha
+        end
+        
+        return old(self, key)
+    end
+    
+    setrawmetatable(rgb, mt)
+    
+    return rgb
+end
+
 local themes = {
     Default = {
         ["Accent"] = Color3.fromRGB(113, 93, 133),
@@ -1175,7 +1195,7 @@ function library:SaveConfig(name, universal)
                 if typeof(value) == "EnumItem" then
                     configtbl[flag] = tostring(value)
                 elseif typeof(value) == "Color3" then
-                    configtbl[flag] = value:ToHex()
+                    configtbl[flag] = {color = value:ToHex(), alpha = value.A}
                 else
                     configtbl[flag] = value
                 end
@@ -1523,15 +1543,23 @@ end
 
 local pickers = {}
 
-function library.createcolorpicker(default, parent, count, flag, callback)
+function library.createcolorpicker(default, defaultalpha, parent, count, flag, callback)
     local icon = utility.create("Square", {
         Filled = true,
         Thickness = 0,
         Color = default,
         Parent = parent,
+        Transparency = defaultalpha,
         Size = UDim2.new(0, 18, 0, 10),
         Position = UDim2.new(1, -18 - (count * 18) - (count * 6), 0, 2),
         ZIndex = 8
+    })
+
+    local alphaicon = utility.create("Image", {
+        Size = UDim2.new(1, 0, 1, 0),
+        ZIndex = 9,
+        Parent = icon,
+        Data = decode("iVBORw0KGgoAAAANSUhEUgAAABIAAAAKBAMAAABLZROSAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAGUExURb+/v////5nD/3QAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAVSURBVBjTY2AQhEIkliAWSLY6QQYAknwC7Za+1vYAAAAASUVORK5CYII=")
     })
 
     utility.outline(icon, "Object Border")
@@ -1539,7 +1567,7 @@ function library.createcolorpicker(default, parent, count, flag, callback)
     utility.create("Image", {
         Size = UDim2.new(1, 0, 1, 0),
         Transparency = 0.5,
-        ZIndex = 9,
+        ZIndex = 10,
         Parent = icon,
         Data = library.gradient
     })
@@ -1549,7 +1577,7 @@ function library.createcolorpicker(default, parent, count, flag, callback)
         Thickness = 0,
         Parent = icon,
         Theme = "Object Background",
-        Size = UDim2.new(0, 192, 0, 144),
+        Size = UDim2.new(0, 192, 0, 158),
         Visible = false,
         Position = UDim2.new(1, -192 + (count * 18) + (count * 6), 1, 6),
         ZIndex = 11
@@ -1572,7 +1600,7 @@ function library.createcolorpicker(default, parent, count, flag, callback)
         Thickness = 0,
         Parent = window,
         Color = default,
-        Size = UDim2.new(0, 158, 0, 110),
+        Size = UDim2.new(0, 164, 0, 110),
         Position = UDim2.new(0, 6, 0, 6),
         ZIndex = 14
     })
@@ -1601,9 +1629,8 @@ function library.createcolorpicker(default, parent, count, flag, callback)
         Filled = true,
         Thickness = 0,
         Parent = window,
-        Color = default,
-        Size = UDim2.new(0, 14, 0, 110),
-        Position = UDim2.new(1, -20, 0, 6),
+        Size = UDim2.new(1, -12, 0, 9),
+        Position = UDim2.new(0, 6, 0, 123),
         ZIndex = 14
     })
 
@@ -1613,7 +1640,7 @@ function library.createcolorpicker(default, parent, count, flag, callback)
         Size = UDim2.new(1, 0, 1, 0),
         ZIndex = 15,
         Parent = hueframe,
-        Data = decode("iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAMAAAAL34HQAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAALrUExURf4AA/8ABP8ACv8AC/8ADP8AFf8AFP4AG/8BKP8AJ/8AJf8AJv8BJv8BJ/4AM/8AQP8ATv8AWP8AV/8AZf0AdP4AhP8Akv8Anf8Aqv4Auf8Ax/8A1f4A2/8A5/8A6P8A8P8A7/8A+P8A//sA//UB/+sA/+wA/+QA/9sA/9oA/9QB/9QB/tUB/tQA/tUA/ssA/8oA/8oA/ssA/r4A/7MA/6cA/6AA/5MB/5IA/5QA/5MA/4UA/3oA/24B/mQA/1gA/00A/0EA/0EA/kIA/jYA/TUA/TUA/i4A/y8A/zEA/zAA/y8A/i8B/i8B/yUA/xsA/xMA/wsA/gYA/gAA/gAG/wAG/gAF/gAF/wAN/wAV/gAc/gEn/wAz/gAz/wAx/gEx/gBA/wA//gA+/gA//wBM/wBV/wBU/gBi/wBy/wB+/wCN/wCX/gCk/wCl/wCy/wCz/wCx/wC//gC+/gG+/gC//wDM/wDM/gDU/wDT/wHT/wDe/wDp/wDy/wD5/gD5/wD+/wD++wD/9AD/7QD/5QD/5AD/3gD/1QH+yQH+ygD+vwD/tAH/qwH/nwL/lAH+hwH/eQD+eAL+cgD/ZQD/WQD/TAD/QQD/OAD/LQD+LQD+LwD+LgD/JgD/JQD/JAH/GwD+EgD/DgH/BwD/AQD/AgX/AAz+AA3/AAv/ABL+ARr/ACT/AiT/ASX/ATD/ADv+AEP+AE//AFv/AVz/AWj/AWf/AXb/AH7/AIz+AZr/AZn/AZj/Aab/ALL/ALP/ALv/ALr/ALn/AMf/ANP/ANL/ANz/AN3/AN7/AN//AOb/Aeb+Aez+APP+APz/Af3/Af/9AP/3AP/2AP/yAf/xAP/xAf7oAP/eAP/TAP/HAP7GAP/GAP/HAf++AP+/AP+wAP+jAP6VAP+IAP9+AP9wAP9iAP5VAP5UAP5UAf5UAv5HAP8+Af8/Af8yAP8zAf8yAf8mAf8cAP8bAP4SAf4SAP4RAf8RAf4RAP8MAP4MAP8FAIkFbMwAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAahSURBVHhezc55nJdVFQbwx5xQQEtxrzRMMR1QZiwbIc0CkUzRNEfcUGZUtAQkULQyyspEbaGsgFEsIyAd3PcVVFxQUaTFBW1lIBRTYGz4s3POPe9d3gV+85GPnO+Hee9zn3vu/YEyW+mas1VFvxHVN+LHSh7+ENuaSCAhUa7TEGxdVxdG+djPxxerFGbqCC25vg4fdnr06MF/vGRcDlXJoRNnkswR3mdVnEse8WfYxiRsS3oKTi7z0qtX73zVs2fvXqI3HYVDKnvzZ7vkHUaP9JKVW5riYrvtJbmXZIr2/FvuHWdbfMQkfNQk7GASdsz06dNHU0zb8kNGJ33kUzVQlN3QbRnsZBJ2Ngm7mIRdTcJuJmF3k7CHSfiYSfi4SfiESdiT7UUkJHwrC++UlCRN4TCblyPmT7I63jq6k2XPvfDJLaFv376aKmBvk/Apk7CPSdjXJPTr128/+uu33/tRcb+774Z5fNok7E8OILyyOKuSKrGJ41rkn0B9ff/+/ekzYACH/vUHHnTQgbTjSvZelKkfwBOSNWWPuKyVnwmXw5mvCG+lkU99PQY2NDY2Ngzkz8FkoH4aGxoaJXpR5gO3dVMSGhrctQY6p8ca5GGecfNh5mBdfKUT0ugdfMYkfNYkHGISPmcSmpoOVRKalDSONoMGR612RLaDBw2WVYvkOm11PbRp8KBBOqGFW4hLTTRBP9PUhM+bhMNMwuEm4Qsm4QiT8EWT8KWcIUOHDtGYKamKhg7VUGVI/pFCwbTEkc6wo47S5A0bNkzTJqSDtKu4GX6jeENjBsOHD/+yoEDxaF0zIR/9Ff5mh7xSKOxk1T7O7Jhjj5HdiBFuH81HpMJxJuF4k/BVk3CCSTjRJHzNJJxUq+ZmDV5zsUrRwEYm+DQ+bm4+eeTIkS7jFJNwqkk4zSScbhLOUKNGjZJFNhnXdc+ZZ53V3Wsyn9zB6NEtLS2jiSwtra1nU251i2u5p6K11TWSqWuhWapkQB7wL/nkJ7iiS/4kvqHJTdPv0tIyGueYhHO3hDFjxmiqgPNMwvkm4esm4Rsm4QKTMHbs2HH0b5z78MKFLNzITlKeL8OqLwl/yR9HWUQPOGE3DuPHj79w/IQJ8rmQ0F52QraS+WSCm1Cu5KC3ZdTP0C7rXUEnPgseyH5SSOsu4ptlJk6aqCnki+RbaRIJlypMnDSJvheFp6govYSLN27y5MmaijZ2VpPqB3CJc+m3LtVkAr5tEr5jEi4zCd/tlim6VpqSTkwhGkmIkoqP+WF8zyR83yRcbhJ+YBJ+SH5EwpIjJX/CMSctssMg3ZFCUQNcYRJ+bBKuLJiqK5uabXh1G3+sYWrGbWO+Ts9ykzoUD07FVSbhapNwjUn4iUn4qUn4mUn4eZlp06bppxSd+KM4dw/frLqKX5iEX5qEa03Cr0zCr03Cb0zC9GDGTNKmm+nT21xu4zbuY9LrhFalZrTNnKExwj/YlvYz2uRBXLdZXT9r1iyNnK/XmOEq35XCDSbhtybhdybhRpPw+81u9mwNItnUDH8wCXPmzJkrfJg7b948TXHL4l16QgpFio+TES20CwvDH03CTSbh5vb2+e2E1vabg/b58+OtygajI95l+5DSrKQq1oL/FxoZbjEJt5qE20zC7Sbhjgp33qnhA5X9KO6y5e67ZcE9JuFek3CfSbg/8cCDDz6gMYdONFUruZ1WvCt9Pz+Fh0zCw1vcI7rG8OgWtmDhwgUaI3jMJDxOniC8miD/GSxatOhJ+lv0pODEsuDa0As//9TTslcyFabTJfb0U1kp035AgtvhmZosXrxYkxdXhWNX0LdwrUo6imdNwnMm4fm8JUs0VCoZ2PSlGoQ3luAFk/Cis3TpUh846ZL1vGWul4/glGXlqtJSU1b4nkgvQeAlZ9myZZpK0bGQoJ1TWjDdsj8RjTk66x7WjuHPJuEvJuGvJuHll18RryaLluq11+iTnfgjLrsr3BbyRP4n+dewfPny1wvSknZ+G3I6U5vcnXgbv7v8dbxhEv5mEv5uEv5hEv5pEv5lEv5tElbkdKxc1aExU1KRlatWrlixij9eB+86VtJHDvliOC55RObzqOxYgf+YhNWpN+WjpMmEnab02N3KpxT3QveO3/nbq1fjrdqseVvDZrZmjYYU/msS3gneJRq9kiqmx+mSCW3ugJRUMawtWsc0r127vnO9Jra+M9l2dr63bt17SRXfFfIcT9FofJZ/OOzWd+J/m9LV1aVJpFvZ5SYqFKZKXlJdXdhg0IYN/wcfF0we/xSTsQAAAABJRU5ErkJggg==")
+        Data = decode("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")
     })
 
     local huepicker = utility.create("Square", {
@@ -1621,18 +1648,48 @@ function library.createcolorpicker(default, parent, count, flag, callback)
         Thickness = 0,
         Parent = hueframe,
         Color = Color3.fromRGB(255, 255, 255),
-        Size = UDim2.new(1, 0, 0, 2),
+        Size = UDim2.new(0, 1, 1, 0),
         ZIndex = 16
     })
 
     utility.outline(huepicker, Color3.fromRGB(0, 0, 0))
+
+    local alphaframe = utility.create("Square", {
+        Filled = true,
+        Thickness = 0,
+        Size = UDim2.new(0, 9, 0, 110),
+        Position = UDim2.new(1, -15, 0, 6),
+        ZIndex = 14,
+        Parent = window
+    })
+
+    utility.outline(alphaframe, "Object Border")
+
+    utility.create("Image", {
+        Size = UDim2.new(1, 0, 1, 0),
+        ZIndex = 15,
+        Transparency = 1,
+        Parent = alphaframe,
+        Data = decode("iVBORw0KGgoAAAANSUhEUgAAAAoAAAB9CAYAAACbFfLEAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsEAAA7BAbiRa+0AAAOvSURBVFhHxZa9cRRBEIV1ksDDxMTGx6dKNgkQARkQAgHg4+MTACV5BIBPANjYOvo95ut7M7sn4amr3vXr35nZ3t3bw+3t7cUqNzc3g53kcuhH5QkTD8fjcdCT3N3dDXYSOh4egROvwnEOl3SUtqO2siYZStgkB29oMs+L6ERySI41meYF8WN2kexx60yEZ0IDhwTnXpE7rtgt0GReFGE8cq6T8YGoWLsBif17wUQ3olOjtrLxCbvOBe6uybwskvfaYTwzPRUZVKQWJOm7whB0u2HDgU+dCR1Y7GnW3MAdTGgyr4oooQ9Uk5lsCRVrp1zFW1sDaQPJ7mQU7E4D/cykMzn2tSbzuoiESZx9mylINVw6/d6jWuOEr8tPh9nbW9sZALsFmsybIjmFQ01mmkpJPwqqOre0dQYoyMN08WQUtJXrwadkEmQoQZpLBbyCJvO2iOTcZOzPytxC2tPSONbk9qeRfHMg/eAEsrlE3UCX412RPkjJcTwz5kM7m2pp2d1lcENG7gfkdjoxE3ibqbuS7RMy0Y5CJojb1mTeF0G8+TEZDmTJjrlcdnVchNMqiKa4OQEcaPknQNSVhNxCF2kyH4oo2FNY/mccoyOVdAHqbL9+2nhAT4d5Jl1boZMTBr9WIpenqwdo4Jgm87EI4o2PLwBuPWu6UA1HK267ydBw0DGvP4zUcCWa66eNoeksLuhqXGkyn4pI2HxOZnMYwZULOk57QdVpTwUbx3hmzAsUb949Qh6EAj8zn4uk6AvgvrQSJOLdsSvlDI1vOgxwYAC7D4POk4t3V5yAIji2v82+FEnJ/xl1lExfTXTIJdHeY143Qcmrz4mqYi/5bcYKjuFcQWFrTeZrEUTd9cz8s04yTSa7JJyjn83GC3lyI4MraKCum9tMmquANjSZb8PJNHhm8El3t+wK0uc9Esg9pV8d+zA2hNoKvH2CfuigwNqtocl8LyLpjY/JtF2ye5ulzfKbOzyXF+CdSLcODN0cQ50S+DuuyfwQKfTm422Gb3rP5HJ0bR9GJgmb5ygNo7aSK3QTEvYOkPBkfhbpTUvHZCQ+IBXaU3YV72UFAkIGOgGszgcTzyGL/Mz8KjLJ8gUgmW6zh7D7at7D9jYbkwHEdg+ja8g1VZK5JvO7CFOw1GSmqUjoQLdcTtNqe02AY9OkX1JyrEGBInckIQOr399mf4pMsrzNLFm5dmYL4l4692dncOI+DA6jtkKQmJGJWSBOsqHJTFOR7PzPOPu/5MkSLy7+AlB3zNiqwui3AAAAAElFTkSuQmCC")
+    })
+
+    local alphapicker = utility.create("Square", {
+        Filled = true,
+        Thickness = 0,
+        Parent = alphaframe,
+        Color = Color3.fromRGB(255, 255, 255),
+        Size = UDim2.new(1, 0, 0, 1),
+        ZIndex = 16
+    })
+
+    utility.outline(alphapicker, Color3.fromRGB(0, 0, 0))
 
     local rgbinput = utility.create("Square", {
         Filled = true,
         Thickness = 0,
         Theme = "Object Background",
         Size = UDim2.new(1, -12, 0, 14),
-        Position = UDim2.new(0, 6, 0, 123),
+        Position = UDim2.new(0, 6, 0, 139),
         ZIndex = 14,
         Parent = window
     })
@@ -1694,40 +1751,52 @@ function library.createcolorpicker(default, parent, count, flag, callback)
 
     local hue, sat, val = default:ToHSV()
     local hsv = default:ToHSV()
+    local alpha = defaultalpha
     local oldcolor = hsv
 
-    local function set(color, nopos)
+    local function set(color, a, nopos)
+        if type(color) == "table" then
+            a = color.alpha
+            color = Color3.fromHex(color.color)
+        end
+
         if type(color) == "string" then
-            color = utility.hextorgb(color)
+            color = Color3.fromHex(color)
+            a = 1
         end
 
         local oldcolor = hsv
+        local oldalpha = alpha
 
         hue, sat, val = color:ToHSV()
+        alpha = a
         hsv = Color3.fromHSV(hue, sat, val)
 
-        if hsv ~= oldcolor then
+        if hsv ~= oldcolor or alpha ~= oldalpha then
             icon.Color = hsv
+            alphaicon.Transparency = 1 - alpha
+            alphaframe.Color = hsv
 
             if not nopos then
-                saturationpicker.Position = UDim2.new(0, (math.clamp(sat * saturation.AbsoluteSize.X, 0, saturation.AbsoluteSize.X - 4)), 0, (math.clamp((1 - val) * saturation.AbsoluteSize.Y, 0, saturation.AbsoluteSize.Y - 4)))
-                huepicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - hue) * saturation.AbsoluteSize.Y, 0, saturation.AbsoluteSize.Y - 4))
+                saturationpicker.Position = UDim2.new(0, (math.clamp(sat * saturation.AbsoluteSize.X, 0, saturation.AbsoluteSize.X - 2)), 0, (math.clamp((1 - val) * saturation.AbsoluteSize.Y, 0, saturation.AbsoluteSize.Y - 2)))
+                huepicker.Position = UDim2.new(0, math.clamp(hue * hueframe.AbsoluteSize.X, 0, hueframe.AbsoluteSize.X - 2), 0, 0)
+                alphapicker.Position = UDim2.new(0, 0, 0, math.clamp((1 - alpha) * alphaframe.AbsoluteSize.Y, 0, alphaframe.AbsoluteSize.Y - 2))
                 saturation.Color = hsv
             end
 
             text.Text = string.format("%s, %s, %s", math.round(hsv.R * 255), math.round(hsv.G * 255), math.round(hsv.B * 255))
 
             if flag then 
-                library.flags[flag] = Color3.fromRGB(hsv.r * 255, hsv.g * 255, hsv.b * 255)
+                library.flags[flag] = utility.rgba(hsv.r * 255, hsv.g * 255, hsv.b * 255, alpha)
             end
 
-            callback(Color3.fromRGB(hsv.r * 255, hsv.g * 255, hsv.b * 255))
+            callback(utility.rgba(hsv.r * 255, hsv.g * 255, hsv.b * 255, alpha))
         end
     end
 
     flags[flag] = set
 
-    set(default)
+    set(default, defaultalpha)
 
     local defhue, _, _ = default:ToHSV()
 
@@ -1759,12 +1828,12 @@ function library.createcolorpicker(default, parent, count, flag, callback)
     local function updatesatval(input)
         local sizeX = math.clamp((input.Position.X - saturation.AbsolutePosition.X) / saturation.AbsoluteSize.X, 0, 1)
         local sizeY = 1 - math.clamp(((input.Position.Y - saturation.AbsolutePosition.Y) + 36) / saturation.AbsoluteSize.Y, 0, 1)
-        local posY = math.clamp(((input.Position.Y - saturation.AbsolutePosition.Y) / saturation.AbsoluteSize.Y) * saturation.AbsoluteSize.Y + 36, 0, saturation.AbsoluteSize.Y - 4)
-        local posX = math.clamp(((input.Position.X - saturation.AbsolutePosition.X) / saturation.AbsoluteSize.X) * saturation.AbsoluteSize.X, 0, saturation.AbsoluteSize.X - 4)
+        local posY = math.clamp(((input.Position.Y - saturation.AbsolutePosition.Y) / saturation.AbsoluteSize.Y) * saturation.AbsoluteSize.Y + 36, 0, saturation.AbsoluteSize.Y - 2)
+        local posX = math.clamp(((input.Position.X - saturation.AbsolutePosition.X) / saturation.AbsoluteSize.X) * saturation.AbsoluteSize.X, 0, saturation.AbsoluteSize.X - 2)
 
         saturationpicker.Position = UDim2.new(0, posX, 0, posY)
 
-        set(Color3.fromHSV(curhuesizey or hue, sizeX, sizeY), true)
+        set(Color3.fromHSV(curhuesizey or hue, sizeX, sizeY), alpha, true)
     end
 
     local slidingsaturation = false
@@ -1785,14 +1854,14 @@ function library.createcolorpicker(default, parent, count, flag, callback)
     local slidinghue = false
 
     local function updatehue(input)
-        local sizeY = 1 - math.clamp(((input.Position.Y - hueframe.AbsolutePosition.Y) + 36) / hueframe.AbsoluteSize.Y, 0, 1)
-        local posY = math.clamp(((input.Position.Y - hueframe.AbsolutePosition.Y) / hueframe.AbsoluteSize.Y) * hueframe.AbsoluteSize.Y + 36, 0, hueframe.AbsoluteSize.Y - 2)
+        local sizeX = math.clamp((input.Position.X - hueframe.AbsolutePosition.X) / hueframe.AbsoluteSize.X, 0, 1)
+        local posX = math.clamp(((input.Position.X - hueframe.AbsolutePosition.X) / hueframe.AbsoluteSize.X) * hueframe.AbsoluteSize.X, 0, hueframe.AbsoluteSize.X - 2)
 
-        huepicker.Position = UDim2.new(0, 0, 0, posY)
-        saturation.Color = Color3.fromHSV(sizeY, 1, 1)
-        curhuesizey = sizeY
+        huepicker.Position = UDim2.new(0, posX, 0, 0)
+        saturation.Color = Color3.fromHSV(sizeX, 1, 1)
+        curhuesizey = sizeX
 
-        set(Color3.fromHSV(sizeY, sat, val), true)
+        set(Color3.fromHSV(sizeX, sat, val), alpha, true)
     end
 
     hueframe.InputBegan:Connect(function(input)
@@ -1808,8 +1877,36 @@ function library.createcolorpicker(default, parent, count, flag, callback)
         end
     end)
 
+    local slidingalpha = false
+
+    local function updatealpha(input)
+        local sizeY = 1 - math.clamp(((input.Position.Y - alphaframe.AbsolutePosition.Y) + 36) / alphaframe.AbsoluteSize.Y, 0, 1)
+        local posY = math.clamp(((input.Position.Y - alphaframe.AbsolutePosition.Y) / alphaframe.AbsoluteSize.Y) * alphaframe.AbsoluteSize.Y + 36, 0, alphaframe.AbsoluteSize.Y - 2)
+
+        alphapicker.Position = UDim2.new(0, 0, 0, posY)
+
+        set(Color3.fromHSV(curhuesizey, sat, val), sizeY, true)
+    end
+
+    alphaframe.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            slidingalpha = true
+            updatealpha(input)
+        end
+    end)
+
+    alphaframe.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            slidingalpha = false
+        end
+    end)
+
     utility.connect(services.InputService.InputChanged, function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
+            if slidingalpha then
+                updatealpha(input)
+            end
+
             if slidinghue then
                 updatehue(input)
             end
@@ -1831,6 +1928,10 @@ function library.createcolorpicker(default, parent, count, flag, callback)
 
         if slidinghue then
             slidinghue = false
+        end
+
+        if slidingalpha then
+            slidingalpha = false
         end
 
         if slidingsaturation then
@@ -2511,8 +2612,9 @@ function library:Load(options)
                     local flag = options.flag or utility.nextflag()
                     local callback = options.callback or function() end
                     local default = options.default or Color3.fromRGB(255, 255, 255)
+                    local defaultalpha = options.defaultalpha or 1
 
-                    return library.createcolorpicker(default, holder, colorpickers, flag, callback)
+                    return library.createcolorpicker(default, defaultalpha, holder, colorpickers, flag, callback)
                 end
 
                 function toggletypes:Keybind(options)
@@ -2812,6 +2914,8 @@ function library:Load(options)
                 local default = options.default
                 local content = type(options.content) == "table" and options.content or {}
                 local max = options.max and (options.max > 1 and options.max) or nil
+                local scrollable = options.scrollable
+                local scrollingmax = options.scrollingmax or 10
                 local flag = options.flag or utility.nextflag()
                 local callback = options.callback or function() end
 
@@ -2913,7 +3017,6 @@ function library:Load(options)
 
                 utility.outline(contentframe, "Object Border")
 
-                
                 utility.create("Image", {
                     Size = UDim2.new(1, 0, 1, 0),
                     Transparency = 0.5,
@@ -2929,6 +3032,10 @@ function library:Load(options)
                     Position = UDim2.new(0, 3, 0, 3),
                     Parent = contentframe
                 })
+
+                if scrollable then
+                    contentholder:MakeScrollable()
+                end
 
                 contentholder:AddListLayout(3)
 
@@ -2963,9 +3070,13 @@ function library:Load(options)
                 end)
 
                 local optioninstances = {}
+                local count = 0
+                local countindex = {}
                 
                 local function createoption(name)
                     optioninstances[name] = {}
+
+                    countindex[name] = count + 1
 
                     local button = utility.create("Square", {
                         Filled = true,
@@ -2992,7 +3103,15 @@ function library:Load(options)
 
                     optioninstances[name].text = title
 
-                    contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
+                    if scrollable then
+                        if count < scrollingmax then
+                            contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
+                        end
+                    else
+                        contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
+                    end
+
+                    count = count + 1
 
                     return button, title
                 end
@@ -3184,6 +3303,7 @@ function library:Load(options)
 
                 function dropdowntypes:Refresh(tbl)
                     content = table.clone(tbl)
+                    count = 0
 
                     for _, opt in next, optioninstances do
                         opt.button:Remove()
@@ -3214,8 +3334,15 @@ function library:Load(options)
 
                 function dropdowntypes:Remove(option)
                     if optioninstances[option] then
+                        count = count - 1
+
                         optioninstances[option].button:Remove()
-                        contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
+ 
+                        if scrollable then
+                            contentframe.Size = UDim2.new(1, 0, 0, math.clamp(contentholder.AbsoluteContentSize, 0, (scrollingmax * 16) + ((scrollingmax - 1) * 3)) + 6)
+                        else
+                            contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
+                        end
 
                         optioninstances[option] = nil
 
@@ -3264,6 +3391,7 @@ function library:Load(options)
                 local default = options.default or Color3.fromRGB(255, 255, 255)
                 local flag = options.flag or utility.nextflag()
                 local callback = options.callback or function() end
+                local defaultalpha = options.defaultalpha or 1
 
                 local holder = utility.create("Square", {
                     Transparency = 0,
@@ -3287,7 +3415,7 @@ function library:Load(options)
 
                 local colorpickers = 0
 
-                local colorpickertypes = library.createcolorpicker(default, holder, colorpickers, flag, callback)
+                local colorpickertypes = library.createcolorpicker(default, defaultalpha, holder, colorpickers, flag, callback)
 
                 function colorpickertypes:ColorPicker(options)
                     colorpickers = colorpickers + 1
@@ -3296,8 +3424,9 @@ function library:Load(options)
                     local default = options.default or Color3.fromRGB(255, 255, 255)
                     local flag = options.flag or utility.nextflag()
                     local callback = options.callback or function() end
+                    local defaultalpha = options.defaultalpha or 1
 
-                    return library.createcolorpicker(default, holder, colorpickers, flag, callback)
+                    return library.createcolorpicker(default, defaultalpha, holder, colorpickers, flag, callback)
                 end
 
                 return colorpickertypes
