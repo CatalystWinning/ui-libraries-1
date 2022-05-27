@@ -43,7 +43,7 @@ local togglepicker1 = toggle:ColorPicker{
     Default = Color3.fromRGB(255, 0, 0), 
     Flag = "Toggle 1 Picker 1", 
     Callback = function(color)
-        print("Toggle 1 Picker 1 is now " .. string.format("%s, %s, %s", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255)))
+        print("Toggle 1 Picker 1 is now " .. string.format("%s, %s, %s, %s", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255), math.floor(color.A * 100) / 100))
     end
 }
 
@@ -53,7 +53,7 @@ local togglepicker2 = toggle:ColorPicker{
     Default = Color3.fromRGB(0, 255, 0), 
     Flag = "Toggle 1 Picker 2", 
     Callback = function(color)
-        print("Toggle 1 Picker 2 is now " .. string.format("%s, %s, %s", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255)))
+        print("Toggle 1 Picker 2 is now " .. string.format("%s, %s, %s, %s", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255), math.floor(color.A * 100) / 100))
     end
 }
 
@@ -176,12 +176,32 @@ multidropdown:Add("Option 5")
 
 multidropdown:Remove("Option 5")
 
+local dropdown = section:Dropdown{
+    Name = "Scrolling Dropdown",
+    --Default = "Option 1",
+    Scrollable = true,
+    ScrollingMax = 5,
+    Content = {
+        "Option 1",
+        "Option 2",
+        "Option 3",
+        "Option 4",
+        "Option 5",
+        "Option 6",
+        "Option 7"
+    },
+    Flag = "Scrolling Dropdown 1",
+    Callback = function(option)
+        print("Scrolling Dropdown 1 is now " .. tostring(option))
+    end
+}
+
 local colorpicker = section:ColorPicker{
     Name = "Color picker",
     Default = Color3.fromRGB(0, 255, 0),
     Flag = "Color picker 1",
     Callback = function(color)
-        print("Color picker 1 is no: " .. string.format("%s, %s, %s", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255)))
+        print("Color picker 1 is now: " .. string.format("%s, %s, %s, %s", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255), math.floor(color.A * 100) / 100))
     end
 }
 
@@ -189,9 +209,10 @@ local colorpicker = section:ColorPicker{
 
 local colorpickerpicker1 = colorpicker:ColorPicker{
     Default = Color3.fromRGB(0, 255, 255),
+    DefaultAlpha = 0.5,
     Flag = "Color picker picker 1",
     Callback = function(color)
-        print("Color picker 1 picker 1 is no: " .. string.format("%s, %s, %s", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255)))
+        print("Color picker 1 picker 1 is now: " .. string.format("%s, %s, %s, %s", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255), math.floor(color.A * 100) / 100))
     end
 }
 
@@ -201,7 +222,7 @@ local colorpickerpicker2 = colorpicker:ColorPicker{
     Default = Color3.fromRGB(255, 255, 255),
     Flag = "Color picker picker 2",
     Callback = function(color)
-        print("Color picker 1 picker 2 is now " .. string.format("%s, %s, %s", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255)))
+        print("Color picker 1 picker 2 is now " .. string.format("%s, %s, %s, %s", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255), math.floor(color.A * 100) / 100))
     end
 }
 
@@ -456,7 +477,7 @@ library:ConfigIgnore("Config Name")
 local save = configsection:Button{
     Name = "Save Config",
     Callback = function()
-        library:SaveConfig(library.flags["Config Name"]) -- SaveConfig(library.flags["Config Name"], true) if you want universal configs
+        library:SaveConfig(library.flags["Config Dropdown"] or library.flags["Config Name"]) -- SaveConfig(library.flags["Config Name"], true) if you want universal configs
         configlist:Refresh(library:GetConfigs())
     end
 }
