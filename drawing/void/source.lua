@@ -2423,6 +2423,11 @@ function library:Load(options)
 
                 local mouseover = false
                 local toggled = false
+                library.flags[flag] = default
+
+                if not default then
+                    callback(default)
+                end
 
                 holder.MouseEnter:Connect(function()
                     if not toggled then
