@@ -775,7 +775,6 @@ local drawing = {} do
                             for i, object in next, objchildren[customproperties.Parent] do
                                 if i > objindex then
                                     object.Position = object.Position + Vector2.new(0, sizediff)
-                                    listcontents[customproperties.Parent] = listcontents[customproperties.Parent] + sizediff
                                     listindexes[customproperties.Parent][i] = listindexes[customproperties.Parent][i] + sizediff
                                 end
                             end
@@ -1027,7 +1026,7 @@ function utility.tabletocolor(tbl)
 end
 
 function utility.round(number, increment)
-    return  number - math.fmod(number, increment)
+    return number - math.fmod(number, increment)
 end
 
 function utility.getrgb(color)
@@ -1540,6 +1539,135 @@ function library.createbox(box, text, callback, finishedcallback)
             end)
         end
     end)
+end
+
+function library.createslider(min, max, parent, text, default, float, flag, callback)
+    local slider = utility.create("Square", {
+        Filled = true,
+        Thickness = 0,
+        Theme = "Object Background",
+        Size = UDim2.new(1, 0, 0, 10),
+        Position = UDim2.new(0, 0, 1, -10),
+        ZIndex = 7,
+        Parent = parent
+    })
+
+    utility.outline(slider, "Object Border")
+
+    utility.create("Image", {
+        Size = UDim2.new(1, 0, 1, 0),
+        Transparency = 0.5,
+        ZIndex = 9,
+        Parent = slider,
+        Data = library.gradient
+    })
+
+    local fill = utility.create("Square", {
+        Filled = true,
+        Thickness = 0,
+        Theme = "Accent",
+        Size = UDim2.new(0, 0, 1, 0),
+        ZIndex = 8,
+        Parent = slider
+    })
+
+    local valuetext = utility.create("Text", {
+        Font = Drawing.Fonts.Plex,
+        Size = 13,
+        Position = UDim2.new(0.5, 0, 0, -2),
+        Theme = "Text",
+        Center = true,
+        ZIndex = 10,
+        Outline = true,
+        Parent = slider
+    })
+
+    local function set(value)
+        value = math.clamp(utility.round(value, float), min, max)
+
+        valuetext.Text = text:gsub("%[value%]", string.format("%.14g", value))
+        
+        local sizeX = ((value - min) / (max - min))
+        fill.Size = UDim2.new(sizeX, 0, 1, 0)
+
+        library.flags[flag] = value
+        callback(value)
+    end
+
+    set(default)
+
+    local sliding = false
+    
+    local mouseover = false
+
+    slider.MouseEnter:Connect(function()
+        mouseover = true
+        if not sliding then
+            slider.Color = utility.changecolor(library.theme["Object Background"], 3)
+        end
+    end)
+
+    slider.MouseLeave:Connect(function()
+        mouseover = false
+        if not sliding then
+            slider.Color = library.theme["Object Background"]
+        end
+    end)
+    
+    local function slide(input)
+        local sizeX = (input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
+        local value = ((max - min) * sizeX) + min
+
+        set(value)
+    end
+
+    utility.connect(slider.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            sliding = true
+            slider.Color = utility.changecolor(library.theme["Object Background"], 6)
+            slide(input)
+        end
+    end)
+
+    utility.connect(slider.InputEnded, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            sliding = false
+            slider.Color = mouseover and utility.changecolor(library.theme["Object Background"], 3) or library.theme["Object Background"]
+        end
+    end)
+
+    utility.connect(fill.InputBegan, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            sliding = true
+            slider.Color = utility.changecolor(library.theme["Object Background"], 6)
+            slide(input)
+        end
+    end)
+
+    utility.connect(fill.InputEnded, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            sliding = false
+            slider.Color = mouseover and utility.changecolor(library.theme["Object Background"], 3) or library.theme["Object Background"]
+        end
+    end)
+
+    utility.connect(services.InputService.InputChanged, function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            if sliding then
+                slide(input)
+            end
+        end
+    end)
+
+    flags[flag] = set
+
+    local slidertypes = utility.table({}, true)
+
+    function slidertypes:Set(value)
+        set(value)
+    end
+
+    return slidertypes, slider
 end
 
 local pickers = {}
@@ -2573,6 +2701,8 @@ function library:Load(options)
                 local flag = options.flag or utility.nextflag()
                 local callback = options.callback or function() end
 
+                local slider
+
                 local holder = utility.create("Square", {
                     Transparency = 0,
                     Size = UDim2.new(1, 0, 0, 10),
@@ -2620,27 +2750,27 @@ function library:Load(options)
                     callback(default)
                 end
 
-                holder.MouseEnter:Connect(function()
+                icon.MouseEnter:Connect(function()
                     if not toggled then
                         mouseover = true
                         icon.Color = utility.changecolor(library.theme["Object Background"], 3)
                     end
                 end)
 
-                holder.MouseLeave:Connect(function()
+                icon.MouseLeave:Connect(function()
                     if not toggled then
                         mouseover = false
                         icon.Color = library.theme["Object Background"]
                     end
                 end)
 
-                holder.MouseButton1Down:Connect(function()
+                icon.MouseButton1Down:Connect(function()
                     if not toggled then
                         icon.Color = utility.changecolor(library.theme["Object Background"], 6)
                     end
                 end)
 
-                holder.MouseButton1Up:Connect(function()
+                icon.MouseButton1Up:Connect(function()
                     if not toggled then
                         icon.Color = mouseover and utility.changecolor(library.theme["Object Background"], 3) or library.theme["Object Background"]
                     end
@@ -2651,6 +2781,12 @@ function library:Load(options)
 
                     if mouseover and not toggled then
                         icon.Color = utility.changecolor(library.theme["Object Background"], 3)
+                    end
+
+                    if slider then
+                        slider.Visible = toggled
+                        holder.Size = UDim2.new(1, 0, 0, toggled and 26 or 10)
+                        section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
                     end
 
                     utility.changeobjecttheme(icon, toggled and "Accent" or "Object Background")
@@ -2670,7 +2806,7 @@ function library:Load(options)
                     callback(toggled)
                 end
 
-                holder.MouseButton1Click:Connect(setstate)
+                icon.MouseButton1Click:Connect(setstate)
 
                 local function set(bool)
                     bool = type(bool) == "boolean" and bool or false
@@ -2719,6 +2855,29 @@ function library:Load(options)
                     end
 
                     return library.createkeybind(default, holder, blacklist, flag, newcallback, -2)
+                end
+
+                function toggletypes:Slider(options)
+                    utility.table(options)
+
+                    local min = options.min or options.minimum or 0
+                    local max = options.max or options.maximum or 100
+                    local text = options.text or ("[value]/" .. max)
+                    local float = options.float or 1
+                    local default = options.default and math.clamp(options.default, min, max) or min
+                    local flag = options.flag or utility.nextflag()
+                    local callback = options.callback or function() end
+
+                    if toggled then
+                        holder.Size = UDim2.new(1, 0, 0, 26)
+                    end
+
+                    local slidertypes, object = library.createslider(min, max, holder, text, default, float, flag, callback)
+                    slider = object
+
+                    object.Visible = toggled
+
+                    return slidertypes
                 end
 
                 return toggletypes
@@ -2862,136 +3021,9 @@ function library:Load(options)
                     Parent = holder
                 })
 
-                local slider = utility.create("Square", {
-                    Filled = true,
-                    Thickness = 0,
-                    Theme = "Object Background",
-                    Size = UDim2.new(1, 0, 0, 10),
-                    Position = UDim2.new(0, 0, 1, -10),
-                    ZIndex = 7,
-                    Parent = holder
-                })
-
-                utility.outline(slider, "Object Border")
-
-                utility.create("Image", {
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Transparency = 0.5,
-                    ZIndex = 9,
-                    Parent = slider,
-                    Data = library.gradient
-                })
-
-                local fill = utility.create("Square", {
-                    Filled = true,
-                    Thickness = 0,
-                    Theme = "Accent",
-                    Size = UDim2.new(0, 0, 1, 0),
-                    ZIndex = 8,
-                    Parent = slider
-                })
-
-                table.insert(accentobjs, fill)
-
-                local valuetext = utility.create("Text", {
-                    Font = Drawing.Fonts.Plex,
-                    Size = 13,
-                    Position = UDim2.new(0.5, 0, 0, -2),
-                    Theme = "Text",
-                    Center = true,
-                    ZIndex = 10,
-                    Outline = true,
-                    Parent = slider
-                })
-
                 section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
-                local function set(value)
-                    value = math.clamp(utility.round(value, float), min, max)
-
-                    valuetext.Text = text:gsub("%[value%]", string.format("%.14g", value))
-                    
-                    local sizeX = ((value - min) / (max - min))
-                    fill.Size = UDim2.new(sizeX, 0, 1, 0)
-
-                    library.flags[flag] = value
-                    callback(value)
-                end
-
-                set(default)
-
-                local sliding = false
-                
-                local mouseover = false
-
-                slider.MouseEnter:Connect(function()
-                    mouseover = true
-                    if not sliding then
-                        slider.Color = utility.changecolor(library.theme["Object Background"], 3)
-                    end
-                end)
-
-                slider.MouseLeave:Connect(function()
-                    mouseover = false
-                    if not sliding then
-                        slider.Color = library.theme["Object Background"]
-                    end
-                end)
-                
-                local function slide(input)
-                    local sizeX = (input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
-                    local value = ((max - min) * sizeX) + min
-
-                    set(value)
-                end
-            
-                utility.connect(slider.InputBegan, function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = true
-                        slider.Color = utility.changecolor(library.theme["Object Background"], 6)
-                        slide(input)
-                    end
-                end)
-            
-                utility.connect(slider.InputEnded, function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = false
-                        slider.Color = mouseover and utility.changecolor(library.theme["Object Background"], 3) or library.theme["Object Background"]
-                    end
-                end)
-
-                utility.connect(fill.InputBegan, function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = true
-                        slider.Color = utility.changecolor(library.theme["Object Background"], 6)
-                        slide(input)
-                    end
-                end)
-            
-                utility.connect(fill.InputEnded, function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        sliding = false
-                        slider.Color = mouseover and utility.changecolor(library.theme["Object Background"], 3) or library.theme["Object Background"]
-                    end
-                end)
-            
-                utility.connect(services.InputService.InputChanged, function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseMovement then
-                        if sliding then
-                            slide(input)
-                        end
-                    end
-                end)
-
-                flags[flag] = set
-
-                local slidertypes = utility.table({}, true)
-
-                function slidertypes:Set(value)
-                    set(value)
-                end
-
-                return slidertypes
+                return library.createslider(min, max, holder, text, default, float, flag, callback)
             end
 
             function sectiontypes:Dropdown(options)
