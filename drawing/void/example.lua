@@ -30,8 +30,8 @@ section:Button{
     end
 }
 
-local seperator = section:Seperator("Seperator")
---seperator:Set("Seperator Set")
+local seperator = section:Separator("Separator")
+--separator:Set("Separator Set")
 
 local toggle = section:Toggle{
     Name = "Toggle",
@@ -83,6 +83,27 @@ toggle2:Keybind{
         else
             print("Toggle 2 Keybind 1 was pressed")
         end
+    end
+}
+
+local toggle3 = section:Toggle{
+    Name = "Toggle 3",
+    Flag = "Toggle 3",
+    --Default = true,
+    Callback  = function(bool)
+        print("Toggle 3 is now " .. (bool and "enabled" or "disabled"))
+    end
+}
+
+toggle3:Slider{
+    Text = "[value]/5",
+    --Default = 0.1,
+    Min = 0,
+    Max = 5,
+    Float = 0.5,
+    Flag = "Slider 1",
+    Callback = function(value)
+        print("Toggle 3 Slider 1 is now " .. value)
     end
 }
 
