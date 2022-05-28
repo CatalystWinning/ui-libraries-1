@@ -30,6 +30,9 @@ section:Button{
     end
 }
 
+local seperator = section:Seperator("Seperator")
+--seperator:Set("Seperator Set")
+
 local toggle = section:Toggle{
     Name = "Toggle",
     Flag = "Toggle 1",
@@ -479,6 +482,20 @@ local save = configsection:Button{
     Callback = function()
         library:SaveConfig(library.flags["Config Dropdown"] or library.flags["Config Name"]) -- SaveConfig(library.flags["Config Name"], true) if you want universal configs
         configlist:Refresh(library:GetConfigs())
+    end
+}
+
+local keybindsection = configs:Section{Name = "UI Toggle Keybind", Side = "Left"}
+
+keybindsection:Keybind{
+    Name = "UI Toggle",
+    Flag = "UI Toggle",
+    Default = Enum.KeyCode.RightShift,
+    Blacklist = {Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2, Enum.UserInputType.MouseButton3},
+    Callback = function(_, fromsetting)
+        if not fromsetting then
+            library:Close()
+        end
     end
 }
 
