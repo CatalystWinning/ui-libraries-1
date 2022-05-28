@@ -2423,54 +2423,54 @@ function library:Load(options)
                 return labeltypes
             end
 
-            function sectiontypes:Seperator(name)
-                local seperator = utility.create("Square", {
+            function sectiontypes:separator(name)
+                local separator = utility.create("Square", {
                     Transparency = 0,
                     Size = UDim2.new(1, 0, 0, 12),
                     Parent = sectioncontent
                 })
 
-                local seperatorline = utility.create("Square", {
+                local separatorline = utility.create("Square", {
                     Size = UDim2.new(1, 0, 0, 1),
                     Position = UDim2.new(0, 0, 0.5, 0),
                     Thickness = 0,
                     Filled = true,
                     ZIndex = 7,
                     Theme = "Object Background",
-                    Parent = seperator
+                    Parent = separator
                 })
 
-                utility.outline(seperatorline, "Object Border")
+                utility.outline(separatorline, "Object Border")
 
                 local sizeX = utility.textlength(name, Drawing.Fonts.Plex, 13).X
 
-                local seperatorborder1 = utility.create("Square", {
+                local separatorborder1 = utility.create("Square", {
                     Size = UDim2.new(0, 1, 1, 2),
                     Position = UDim2.new(0.5, (-sizeX / 2) - 7, 0.5, -1),
                     Thickness = 0,
                     Filled = true,
                     ZIndex = 9,
                     Theme = "Object Border",
-                    Parent = seperatorline
+                    Parent = separatorline
                 })
 
-                local seperatorborder2 = utility.create("Square", {
+                local separatorborder2 = utility.create("Square", {
                     Size = UDim2.new(0, 1, 1, 2),
                     Position = UDim2.new(0.5, sizeX / 2 + 5, 0, -1),
                     Thickness = 0,
                     Filled = true,
                     ZIndex = 9,
                     Theme = "Object Border",
-                    Parent = seperatorline
+                    Parent = separatorline
                 })
 
-                local seperatorcutoff = utility.create("Square", {
+                local separatorcutoff = utility.create("Square", {
                     Size = UDim2.new(0, sizeX + 12, 0, 3),
                     Position = UDim2.new(0.5, (-sizeX / 2) - 7, 0.5, -1),
                     ZIndex = 8,
                     Filled = true,
                     Theme = "Section Background",
-                    Parent = seperator
+                    Parent = separator
                 })
 
                 local text = utility.create("Text", {
@@ -2482,25 +2482,27 @@ function library:Load(options)
                     ZIndex = 9,
                     Outline = true,
                     Center = true,
-                    Parent = seperator,
+                    Parent = separator,
                 })
 
                 section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
-                local seperatortypes = utility.table({}, true)
+                local separatortypes = utility.table({}, true)
 
-                function seperatortypes:Set(str)
+                function separatortypes:Set(str)
                     local sizeX = utility.textlength(str, Drawing.Fonts.Plex, 13).X
-                    seperatorcutoff.Size = UDim2.new(0, sizeX + 12, 0, 3)
-                    seperatorcutoff.Position =  UDim2.new(0.5, (-sizeX / 2) - 7, 0.5, -1)
-                    seperatorborder1.Position =  UDim2.new(0.5, (-sizeX / 2) - 7, 0.5, -1)
-                    seperatorborder2.Position = UDim2.new(0.5, sizeX / 2 + 5, 0, -1)
+                    separatorcutoff.Size = UDim2.new(0, sizeX + 12, 0, 3)
+                    separatorcutoff.Position =  UDim2.new(0.5, (-sizeX / 2) - 7, 0.5, -1)
+                    separatorborder1.Position =  UDim2.new(0.5, (-sizeX / 2) - 7, 0.5, -1)
+                    separatorborder2.Position = UDim2.new(0.5, sizeX / 2 + 5, 0, -1)
 
                     text.Text = str
                 end
 
-                return seperatortypes
+                return separatortypes
             end
+
+            sectiontypes.seperator = sectiontypes.separator
 
             function sectiontypes:Button(options)
                 utility.table(options)
