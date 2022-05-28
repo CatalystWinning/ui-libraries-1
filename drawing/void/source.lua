@@ -2860,6 +2860,7 @@ function library:Load(options)
                     local callback = options.callback or function() end
 
                     holder.Size = UDim2.new(1, 0, 0, 26)
+                    section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
                     return library.createslider(min, max, holder, text, default, float, flag, callback)
                 end
