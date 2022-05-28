@@ -1667,7 +1667,7 @@ function library.createslider(min, max, parent, text, default, float, flag, call
         set(value)
     end
 
-    return slidertypes, slider
+    return slidertypes
 end
 
 local pickers = {}
@@ -2701,8 +2701,6 @@ function library:Load(options)
                 local flag = options.flag or utility.nextflag()
                 local callback = options.callback or function() end
 
-                local slider
-
                 local holder = utility.create("Square", {
                     Transparency = 0,
                     Size = UDim2.new(1, 0, 0, 10),
@@ -2783,12 +2781,6 @@ function library:Load(options)
                         icon.Color = utility.changecolor(library.theme["Object Background"], 3)
                     end
 
-                    if slider then
-                        slider.Visible = toggled
-                        holder.Size = UDim2.new(1, 0, 0, toggled and 26 or 10)
-                        section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
-                    end
-
                     utility.changeobjecttheme(icon, toggled and "Accent" or "Object Background")
                     utility.changeobjecttheme(title, toggled and "Accent" or "Disabled Text")
                     icon.Color = toggled and library.theme["Accent"] or (mouseover and utility.changecolor(library.theme["Object Background"], 3) or library.theme["Object Background"])
@@ -2800,7 +2792,6 @@ function library:Load(options)
                         table.remove(accentobjs, table.find(accentobjs, icon))
                         table.remove(accentobjs, table.find(accentobjs, title))
                     end
-
                     
                     library.flags[flag] = toggled
                     callback(toggled)
@@ -2868,16 +2859,9 @@ function library:Load(options)
                     local flag = options.flag or utility.nextflag()
                     local callback = options.callback or function() end
 
-                    if toggled then
-                        holder.Size = UDim2.new(1, 0, 0, 26)
-                    end
+                    holder.Size = UDim2.new(1, 0, 0, 26)
 
-                    local slidertypes, object = library.createslider(min, max, holder, text, default, float, flag, callback)
-                    slider = object
-
-                    object.Visible = toggled
-
-                    return slidertypes
+                    return library.createslider(min, max, holder, text, default, float, flag, callback)
                 end
 
                 return toggletypes
