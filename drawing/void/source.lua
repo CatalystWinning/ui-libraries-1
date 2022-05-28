@@ -1058,13 +1058,13 @@ function utility.rgba(r, g, b, alpha)
     setreadonly(mt, false)
     local old = mt.__index
     
-    mt.__index = function(self, key)
+    mt.__index = newcclosure(function(self, key)
         if key:lower() == "a" then
             return alpha
         end
         
         return old(self, key)
-    end
+    end)
     
     setrawmetatable(rgb, mt)
     
