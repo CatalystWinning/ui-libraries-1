@@ -1998,7 +1998,11 @@ local keys = {
     [Enum.UserInputType.MouseButton3] = "MOUSE-3"
 }
 
-function library.createkeybind(default, parent, blacklist, flag, callback)
+function library.createkeybind(default, parent, blacklist, flag, callback, offset)
+    if not offset then
+        offset = 0
+    end
+
     local keybutton = utility.create("Square", {
         Filled = true,
         Thickness = 0,
@@ -2012,6 +2016,7 @@ function library.createkeybind(default, parent, blacklist, flag, callback)
         Font = Drawing.Fonts.Plex,
         Size = 13,
         Theme = "Disabled Text",
+        Position = UDim2.new(0, 0, 0, offset),
         ZIndex = 9,
         Outline = true,
         Parent = keybutton,
@@ -2037,7 +2042,7 @@ function library.createkeybind(default, parent, blacklist, flag, callback)
 
             keytext.Text = text
             utility.changeobjecttheme(keytext, "Text")
-            keytext.Position = UDim2.new(1, -sizeX, 0, 0)
+            keytext.Position = UDim2.new(1, -sizeX, 0, offset)
 
             library.flags[flag] = newkey
             callback(newkey, true)
@@ -2052,7 +2057,7 @@ function library.createkeybind(default, parent, blacklist, flag, callback)
 
             keytext.Text = text
             utility.changeobjecttheme(keytext, "Disabled Text")
-            keytext.Position = UDim2.new(1, -sizeX, 0, 0)
+            keytext.Position = UDim2.new(1, -sizeX, 0, offset)
 
             library.flags[flag] = newkey
             callback(newkey, true)
@@ -2392,7 +2397,7 @@ function library:Load(options)
             function sectiontypes:Label(name)
                 local label = utility.create("Square", {
                     Transparency = 0,
-                    Size = UDim2.new(1, 0, 0, 12),
+                    Size = UDim2.new(1, 0, 0, 13),
                     Parent = sectioncontent
                 })
 
@@ -2416,6 +2421,85 @@ function library:Load(options)
                 end
 
                 return labeltypes
+            end
+
+            function sectiontypes:Seperator(name)
+                local seperator = utility.create("Square", {
+                    Transparency = 0,
+                    Size = UDim2.new(1, 0, 0, 12),
+                    Parent = sectioncontent
+                })
+
+                local seperatorline = utility.create("Square", {
+                    Size = UDim2.new(1, 0, 0, 1),
+                    Position = UDim2.new(0, 0, 0.5, 0),
+                    Thickness = 0,
+                    Filled = true,
+                    ZIndex = 7,
+                    Theme = "Object Background",
+                    Parent = seperator
+                })
+
+                utility.outline(seperatorline, "Object Border")
+
+                local sizeX = utility.textlength(name, Drawing.Fonts.Plex, 13).X
+
+                local seperatorborder1 = utility.create("Square", {
+                    Size = UDim2.new(0, 1, 1, 2),
+                    Position = UDim2.new(0.5, (-sizeX / 2) - 7, 0.5, -1),
+                    Thickness = 0,
+                    Filled = true,
+                    ZIndex = 9,
+                    Theme = "Object Border",
+                    Parent = seperatorline
+                })
+
+                local seperatorborder2 = utility.create("Square", {
+                    Size = UDim2.new(0, 1, 1, 2),
+                    Position = UDim2.new(0.5, sizeX / 2 + 5, 0, -1),
+                    Thickness = 0,
+                    Filled = true,
+                    ZIndex = 9,
+                    Theme = "Object Border",
+                    Parent = seperatorline
+                })
+
+                local seperatorcutoff = utility.create("Square", {
+                    Size = UDim2.new(0, sizeX + 12, 0, 3),
+                    Position = UDim2.new(0.5, (-sizeX / 2) - 7, 0.5, -1),
+                    ZIndex = 8,
+                    Filled = true,
+                    Theme = "Section Background",
+                    Parent = seperator
+                })
+
+                local text = utility.create("Text", {
+                    Text = name,
+                    Font = Drawing.Fonts.Plex,
+                    Size = 13,
+                    Position = UDim2.new(0.5, 0, 0, 0),
+                    Theme = "Text",
+                    ZIndex = 9,
+                    Outline = true,
+                    Center = true,
+                    Parent = seperator,
+                })
+
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
+
+                local seperatortypes = utility.table({}, true)
+
+                function seperatortypes:Set(str)
+                    local sizeX = utility.textlength(str, Drawing.Fonts.Plex, 13).X
+                    seperatorcutoff.Size = UDim2.new(0, sizeX + 12, 0, 3)
+                    seperatorcutoff.Position =  UDim2.new(0.5, (-sizeX / 2) - 7, 0.5, -1)
+                    seperatorborder1.Position =  UDim2.new(0.5, (-sizeX / 2) - 7, 0.5, -1)
+                    seperatorborder2.Position = UDim2.new(0.5, sizeX / 2 + 5, 0, -1)
+
+                    text.Text = str
+                end
+
+                return seperatortypes
             end
 
             function sectiontypes:Button(options)
@@ -2498,7 +2582,6 @@ function library:Load(options)
                     Thickness = 0,
                     Theme = "Object Background",
                     Size = UDim2.new(0, 10, 0, 10),
-                    Position = UDim2.new(0, 0, 0, 0),
                     ZIndex = 7,
                     Parent = holder
                 })
@@ -2632,7 +2715,7 @@ function library:Load(options)
                         callback(key, fromsetting)
                     end
 
-                    return library.createkeybind(default, holder, blacklist, flag, newcallback)
+                    return library.createkeybind(default, holder, blacklist, flag, newcallback, -2)
                 end
 
                 return toggletypes
@@ -3396,6 +3479,7 @@ function library:Load(options)
                 local holder = utility.create("Square", {
                     Transparency = 0,
                     Size = UDim2.new(1, 0, 0, 10),
+                    Position = UDim2.new(0, 0, 0, -1),
                     ZIndex = 7,
                     Parent = sectioncontent
                 })
@@ -3443,6 +3527,7 @@ function library:Load(options)
                 local holder = utility.create("Square", {
                     Transparency = 0,
                     Size = UDim2.new(1, 0, 0, 10),
+                    Position = UDim2.new(0, 0, 0, -1),
                     ZIndex = 7,
                     Parent = sectioncontent
                 })
@@ -3451,7 +3536,6 @@ function library:Load(options)
                     Text = name,
                     Font = Drawing.Fonts.Plex,
                     Size = 13,
-                    Position = UDim2.new(0, 0, 0, -2),
                     Theme = "Text",
                     ZIndex = 7,
                     Outline = true,
@@ -3460,7 +3544,7 @@ function library:Load(options)
 
                 section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
-                return library.createkeybind(default, holder, blacklist, flag, callback)
+                return library.createkeybind(default, holder, blacklist, flag, callback, -1)
             end
 
             return sectiontypes
