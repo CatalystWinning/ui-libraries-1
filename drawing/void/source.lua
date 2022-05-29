@@ -1025,8 +1025,8 @@ function utility.tabletocolor(tbl)
     return Color3.fromRGB(unpack(tbl))
 end
 
-function utility.round(number, increment)
-    return number - math.fmod(number, increment)
+function utility.round(number, float)
+    return float * math.floor(number / float)
 end
 
 function utility.getrgb(color)
