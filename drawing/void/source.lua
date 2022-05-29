@@ -3126,8 +3126,14 @@ function library:Load(options)
                 local holder = utility.create("Square", {
                     Transparency = 0,
                     Size = UDim2.new(1, 0, 0, 10),
-                    ZIndex = 7,
                     Parent = sectioncontent
+                })
+
+                local toggleclick = utility.create("Square", {
+                    Transparency = 0,
+                    Size = UDim2.new(1, 0, 0, 10),
+                    ZIndex = 7,
+                    Parent = holder
                 })
 
                 local icon = utility.create("Square", {
@@ -3219,7 +3225,7 @@ function library:Load(options)
                     callback(toggled)
                 end
 
-                icon.MouseButton1Click:Connect(setstate)
+                toggleclick.MouseButton1Click:Connect(setstate)
 
                 local function set(bool)
                     bool = type(bool) == "boolean" and bool or false
@@ -3281,7 +3287,7 @@ function library:Load(options)
                     local flag = options.flag or utility.nextflag()
                     local callback = options.callback or function() end
 
-                    holder.Size = UDim2.new(1, 0, 0, 26)
+                    holder.Size = UDim2.new(1, 0, 0, 27)
                     section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
                     return library.createslider(min, max, holder, text, default, float, flag, callback)
