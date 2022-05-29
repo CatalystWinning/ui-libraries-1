@@ -3329,7 +3329,7 @@ function library:Load(options)
                         end
                     end
 
-                    holder.Size = UDim2.new(1, 0, 0, 31)
+                    holder.Size = UDim2.new(1, 0, 0, 32)
                     section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
                     return library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax)
