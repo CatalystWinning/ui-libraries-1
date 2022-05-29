@@ -107,6 +107,28 @@ toggle3:Slider{
     end
 }
 
+local toggle4 = section:Toggle{
+    Name = "Toggle 4",
+    Flag = "Toggle 4",
+    --Default = true,
+    Callback  = function(bool)
+        print("Toggle 4 is now " .. (bool and "enabled" or "disabled"))
+    end
+}
+
+toggle4:Dropdown{
+    --Default = "Option 1",
+    Content = {
+        "Option 1",
+        "Option 2",
+        "Option 3"
+    },
+    Flag = "Dropdown 1",
+    Callback = function(option)
+        print("Dropdown 1 is now " .. tostring(option))
+    end
+}
+
 local box = section:Box{
     Name = "Box",
     --Default = "hi",
