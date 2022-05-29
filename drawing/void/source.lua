@@ -3263,6 +3263,7 @@ function library:Load(options)
                     local default = options.default
                     local blacklist = options.blacklist or {}
                     local flag = options.flag or utility.nextflag()
+                    local mode = options.mode and options.mode:lower()
                     local callback = options.callback or function() end
 
                     local newcallback = function(key, fromsetting)
@@ -3273,7 +3274,7 @@ function library:Load(options)
                         callback(key, fromsetting)
                     end
 
-                    return library.createkeybind(default, holder, blacklist, flag, newcallback, -2)
+                    return library.createkeybind(default, holder, blacklist, flag, mode == "toggle" and newcallback or callback, -2)
                 end
 
                 function toggletypes:Slider(options)
