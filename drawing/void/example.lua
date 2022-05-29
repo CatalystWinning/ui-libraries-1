@@ -97,7 +97,7 @@ local toggle3 = section:Toggle{
 
 toggle3:Slider{
     Text = "[value]/5",
-    --Default = 0.1,
+    --Default = 5,
     Min = 0,
     Max = 5,
     Float = 0.5,
@@ -123,11 +123,15 @@ toggle4:Dropdown{
         "Option 2",
         "Option 3"
     },
+    --Max = 5, -- turns into multidropdown
+    --Scrollable = true, -- makes it scrollable
+    --ScrollingMax = 5, -- caps the amount it contains before scrolling
     Flag = "Dropdown 1",
     Callback = function(option)
         print("Dropdown 1 is now " .. tostring(option))
     end
 }
+
 
 local box = section:Box{
     Name = "Box",
