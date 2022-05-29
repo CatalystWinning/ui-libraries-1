@@ -74,9 +74,10 @@ local toggle2 = section:Toggle{
 }
 
 toggle2:Keybind{
-    --Default = Enum.KeyCode.A
+    --Default = Enum.KeyCode.A,
     Blacklist = {Enum.UserInputType.MouseButton1},
     Flag = "Toggle 2 Keybind 1",
+    Mode = "Toggle", -- mode to nil if u dont want it to toggle the toggle
     Callback = function(key, fromsetting)
         if fromsetting then
             print("Toggle 2 Keybind 1 is now " .. tostring(key))
