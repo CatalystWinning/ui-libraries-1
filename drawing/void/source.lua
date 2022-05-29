@@ -1541,6 +1541,428 @@ function library.createbox(box, text, callback, finishedcallback)
     end)
 end
 
+function library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax)
+    local dropdown = utility.create("Square", {
+        Filled = true,
+        Thickness = 0,
+        Theme = "Object Background",
+        Size = UDim2.new(1, 0, 0, 14),
+        Position = UDim2.new(0, 0, 1, -14),
+        ZIndex = 7,
+        Parent = holder
+    })
+
+    utility.outline(dropdown, "Object Border")
+
+    utility.create("Image", {
+        Size = UDim2.new(1, 0, 1, 0),
+        Transparency = 0.5,
+        ZIndex = 8,
+        Parent = dropdown,
+        Data = library.gradient
+    })
+    
+    local value = utility.create("Text", {
+        Text = "NONE",
+        Font = Drawing.Fonts.Plex,
+        Size = 13,
+        Position = UDim2.new(0, 6, 0, 0),
+        Theme = "Disabled Text",
+        ZIndex = 9,
+        Outline = true,
+        Parent = dropdown
+    })
+
+    local icon = utility.create("Text", {
+        Text = "+",
+        Font = Drawing.Fonts.Plex,
+        Size = 13,
+        Position = UDim2.new(1, -13, 0, 0),
+        Theme = "Text",
+        ZIndex = 9,
+        Outline = true,
+        Parent = dropdown
+    })
+
+    local contentframe = utility.create("Square", {
+        Filled = true,
+        Visible = false,
+        Thickness = 0,
+        Theme = "Object Background",
+        Size = UDim2.new(1, 0, 0, 0),
+        Position = UDim2.new(0, 0, 1, 6),
+        ZIndex = 12,
+        Parent = dropdown
+    })
+
+    utility.outline(contentframe, "Object Border")
+
+    utility.create("Image", {
+        Size = UDim2.new(1, 0, 1, 0),
+        Transparency = 0.5,
+        ZIndex = 13,
+        Parent = contentframe,
+        Data = library.gradient
+    })
+
+
+    local contentholder = utility.create("Square", {
+        Transparency = 0,
+        Size = UDim2.new(1, -6, 1, -6),
+        Position = UDim2.new(0, 3, 0, 3),
+        Parent = contentframe
+    })
+
+    if scrollable then
+        contentholder:MakeScrollable()
+    end
+
+    contentholder:AddListLayout(3)
+
+    local mouseover = false
+
+    dropdown.MouseEnter:Connect(function()
+        mouseover = true
+        dropdown.Color = utility.changecolor(library.theme["Object Background"], 3)
+    end)
+
+    dropdown.MouseLeave:Connect(function()
+        mouseover = false
+        dropdown.Color = library.theme["Object Background"]
+    end)
+
+    dropdown.MouseButton1Down:Connect(function()
+        dropdown.Color = utility.changecolor(library.theme["Object Background"], 6)
+    end)
+
+    dropdown.MouseButton1Up:Connect(function()
+        dropdown.Color = mouseover and utility.changecolor(library.theme["Object Background"], 3) or library.theme["Object Background"]
+    end)
+
+    local opened = false
+
+    dropdown.MouseButton1Click:Connect(function()
+        opened = not opened
+        contentframe.Visible = opened
+        icon.Text = opened and "-" or "+"
+    end)
+
+    local optioninstances = {}
+    local count = 0
+    local countindex = {}
+    
+    local function createoption(name)
+        optioninstances[name] = {}
+
+        countindex[name] = count + 1
+
+        local button = utility.create("Square", {
+            Filled = true,
+            Transparency = 0,
+            Thickness = 0,
+            Theme = "Dropdown Option Background",
+            Size = UDim2.new(1, 0, 0, 16),
+            ZIndex = 14,
+            Parent = contentholder
+        })
+
+        optioninstances[name].button = button
+
+        local title = utility.create("Text", {
+            Text = name,
+            Font = Drawing.Fonts.Plex,
+            Size = 13,
+            Position = UDim2.new(0, 8, 0, 1),
+            Theme = "Disabled Text",
+            ZIndex = 15,
+            Outline = true,
+            Parent = button
+        })
+
+        optioninstances[name].text = title
+
+        if scrollable then
+            if count < scrollingmax then
+                contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
+            end
+        else
+            contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
+        end
+
+        count = count + 1
+
+        return button, title
+    end
+
+    local chosen = max and {}
+
+    local function handleoptionclick(option, button, text)
+        button.MouseButton1Click:Connect(function()
+            if max then
+                if table.find(chosen, option) then
+                    table.remove(chosen, table.find(chosen, option))
+
+                    local textchosen = {}
+                    local cutobject = false
+
+                    for _, opt in next, chosen do
+                        table.insert(textchosen, opt)
+
+                        if utility.textlength(table.concat(textchosen, ", ") .. ", ...", Drawing.Fonts.Plex, 13).X > (dropdown.AbsoluteSize.X - 18) then
+                            cutobject = true
+                            table.remove(textchosen, #textchosen)
+                        end
+                    end
+
+                    value.Text = #chosen == 0 and "NONE" or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
+                    utility.changeobjecttheme(value, #chosen == 0 and "Disabled Text" or "Text")
+
+                    button.Transparency = 0
+                    utility.changeobjecttheme(text, "Disabled Text")
+
+                    library.flags[flag] = chosen
+                    callback(chosen)
+                else
+                    if #chosen == max then
+                        optioninstances[chosen[1]].button.Transparency = 0
+                        utility.changeobjecttheme(optioninstances[chosen[1]].text, "Disabled Text")
+
+                        table.remove(chosen, 1)
+                    end
+
+                    table.insert(chosen, option)
+
+                    local textchosen = {}
+                    local cutobject = false
+
+                    for _, opt in next, chosen do
+                        table.insert(textchosen, opt)
+
+                        if utility.textlength(table.concat(textchosen, ", ") .. ", ...", Drawing.Fonts.Plex, 13).X > (dropdown.AbsoluteSize.X - 18) then
+                            cutobject = true
+                            table.remove(textchosen, #textchosen)
+                        end
+                    end
+
+                    value.Text = #chosen == 0 and "NONE" or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
+                    utility.changeobjecttheme(value, #chosen == 0 and "Disabled Text" or "Text")
+
+                    button.Transparency = 1
+                    utility.changeobjecttheme(text, "Text")
+
+                    library.flags[flag] = chosen
+                    callback(chosen)
+                end
+            else
+                for opt, tbl in next, optioninstances do
+                    if opt ~= option then
+                        tbl.button.Transparency = 0
+                        utility.changeobjecttheme(tbl.text, "Disabled Text")
+                    end
+                end
+
+                if chosen == option then
+                    chosen = nil
+
+                    value.Text = "NONE"
+                    utility.changeobjecttheme(value, "Disabled Text")
+
+                    button.Transparency = 0
+
+                    utility.changeobjecttheme(text, "Disabled Text")
+
+                    library.flags[flag] = nil
+                    callback(nil)
+                else
+                    chosen = option
+
+                    value.Text = option
+                    utility.changeobjecttheme(value, "Text")
+
+                    button.Transparency = 1
+                    utility.changeobjecttheme(text, "Text")
+
+                    library.flags[flag] = option
+                    callback(option)
+                end
+            end
+        end)
+    end
+
+    local function createoptions(tbl)
+        for _, option in next, tbl do
+            local button, text = createoption(option)
+            handleoptionclick(option, button, text)
+        end
+    end
+
+    createoptions(content)
+
+    local set
+    set = function(option)
+        if max then
+            option = type(option) == "table" and option or {}
+            table.clear(chosen)
+
+            for opt, tbl in next, optioninstances do
+                if not table.find(option, opt) then
+                    tbl.button.Transparency = 0
+                    utility.changeobjecttheme(tbl.text, "Disabled Text")
+                end
+            end
+
+            for i, opt in next, option do
+                if table.find(content, opt) and #chosen < max then
+                    table.insert(chosen, opt)
+                    optioninstances[opt].button.Transparency = 1
+                    utility.changeobjecttheme(optioninstances[opt].text, "Text")
+                end
+            end
+
+            local textchosen = {}
+            local cutobject = false
+
+            for _, opt in next, chosen do
+                table.insert(textchosen, opt)
+
+                if utility.textlength(table.concat(textchosen, ", ") .. ", ...", Drawing.Fonts.Plex, 13).X > (dropdown.AbsoluteSize.X - 6) then
+                    cutobject = true
+                    table.remove(textchosen, #textchosen)
+                end
+            end
+
+            value.Text = #chosen == 0 and "NONE" or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
+            utility.changeobjecttheme(value, #chosen == 0 and "Disabled Text" or "Text")
+
+            library.flags[flag] = chosen
+            callback(chosen)
+        end
+        
+        if not max then
+            for opt, tbl in next, optioninstances do
+                if opt ~= option then
+                    tbl.button.Transparency = 0
+                    utility.changeobjecttheme(tbl.text, "Disabled Text")
+                end
+            end
+
+            if table.find(content, option) then
+                chosen = option
+
+                value.Text = option
+                utility.changeobjecttheme(value, "Text")
+
+                optioninstances[option].button.Transparency = 1
+                utility.changeobjecttheme(optioninstances[option].text, "Text")
+
+                library.flags[flag] = chosen
+                callback(chosen)
+            else
+                chosen = nil
+
+                value.Text = "NONE"
+                utility.changeobjecttheme(value, "Disabled Text")
+
+                library.flags[flag] = chosen
+                callback(chosen)
+            end
+        end
+    end
+
+    flags[flag] = set
+
+    set(default)
+
+    local dropdowntypes = utility.table({}, true)
+
+    function dropdowntypes:Set(option)
+        set(option)
+    end
+
+    function dropdowntypes:Refresh(tbl)
+        content = table.clone(tbl)
+        count = 0
+
+        for _, opt in next, optioninstances do
+            opt.button:Remove()
+        end
+
+        table.clear(optioninstances)
+
+        value.Text = "NONE"
+        utility.changeobjecttheme(value, "Disabled Text")
+
+        if max then
+            table.clear(chosen)
+        else
+            chosen = nil
+        end
+
+        createoptions(tbl)
+        
+        library.flags[flag] = chosen
+        callback(chosen)
+    end
+
+    function dropdowntypes:Add(option)
+        table.insert(content, option)
+        local button, text = createoption(option)
+        handleoptionclick(option, button, text)
+    end
+
+    function dropdowntypes:Remove(option)
+        if optioninstances[option] then
+            count = count - 1
+
+            optioninstances[option].button:Remove()
+
+            if scrollable then
+                contentframe.Size = UDim2.new(1, 0, 0, math.clamp(contentholder.AbsoluteContentSize, 0, (scrollingmax * 16) + ((scrollingmax - 1) * 3)) + 6)
+            else
+                contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
+            end
+
+            optioninstances[option] = nil
+
+            if max then
+                if table.find(chosen, option) then
+                    table.remove(chosen, table.find(chosen, option))
+
+                    local textchosen = {}
+                    local cutobject = false
+
+                    for _, opt in next, chosen do
+                        table.insert(textchosen, opt)
+
+                        if utility.textlength(table.concat(textchosen, ", ") .. ", ...", Drawing.Fonts.Plex, 13).X > (dropdown.AbsoluteSize.X - 6) then
+                            cutobject = true
+                            table.remove(textchosen, #textchosen)
+                        end
+                    end
+
+                    value.Text = #chosen == 0 and "NONE" or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
+                    utility.changeobjecttheme(value, #chosen == 0 and "Disabled Text" or "Text")
+
+                    library.flags[flag] = chosen
+                    callback(chosen)
+                end
+            else
+                if chosen == option then
+                    chosen = nil
+
+                    value.Text = "NONE"
+                    utility.changeobjecttheme(value, "Disabled Text")
+
+                    library.flags[flag] = chosen
+                    callback(chosen)
+                end
+            end
+        end
+    end
+
+    return dropdowntypes
+end
+
 function library.createslider(min, max, parent, text, default, float, flag, callback)
     local slider = utility.create("Square", {
         Filled = true,
@@ -2865,6 +3287,48 @@ function library:Load(options)
                     return library.createslider(min, max, holder, text, default, float, flag, callback)
                 end
 
+                function toggletypes:Dropdown(options)
+                    utility.table(options)
+                    local default = options.default
+                    local content = type(options.content) == "table" and options.content or {}
+                    local max = options.max and (options.max > 1 and options.max) or nil
+                    local scrollable = options.scrollable
+                    local scrollingmax = options.scrollingmax or 10
+                    local flag = options.flag or utility.nextflag()
+                    local callback = options.callback or function() end
+    
+                    if not max and type(default) == "table" then
+                        default = nil
+                    end
+    
+                    if max and default == nil then
+                        default = {}
+                    end
+    
+                    if type(default) == "table" then
+                        if max then
+                            for i, opt in next, default do
+                                if not table.find(content, opt) then
+                                    table.remove(default, i)
+                                elseif i > max then
+                                    table.remove(default, i)
+                                end
+                            end
+                        else
+                            default = nil
+                        end
+                    elseif default ~= nil then
+                        if not table.find(content, default) then
+                            default = nil
+                        end
+                    end
+
+                    holder.Size = UDim2.new(1, 0, 0, 31)
+                    section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
+
+                    return library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax)
+                end
+
                 return toggletypes
             end
 
@@ -3050,7 +3514,7 @@ function library:Load(options)
 
                 local holder = utility.create("Square", {
                     Transparency = 0,
-                    Size = UDim2.new(1, 0, 0, 31),
+                    Size = UDim2.new(1, 0, 0, 29),
                     Parent = sectioncontent
                 })
 
@@ -3058,434 +3522,16 @@ function library:Load(options)
                     Text = name,
                     Font = Drawing.Fonts.Plex,
                     Size = 13,
-                    Position = UDim2.new(0, 0, 0, 0),
+                    Position = UDim2.new(0, 0, 0, -2),
                     Theme = "Text",
                     ZIndex = 7,
                     Outline = true,
                     Parent = holder
                 })
-
-                local dropdown = utility.create("Square", {
-                    Filled = true,
-                    Thickness = 0,
-                    Theme = "Object Background",
-                    Size = UDim2.new(1, 0, 0, 14),
-                    Position = UDim2.new(0, 0, 1, -14),
-                    ZIndex = 7,
-                    Parent = holder
-                })
-
-                utility.outline(dropdown, "Object Border")
-
-                utility.create("Image", {
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Transparency = 0.5,
-                    ZIndex = 8,
-                    Parent = dropdown,
-                    Data = library.gradient
-                })
-                
-                local value = utility.create("Text", {
-                    Text = "NONE",
-                    Font = Drawing.Fonts.Plex,
-                    Size = 13,
-                    Position = UDim2.new(0, 6, 0, 0),
-                    Theme = "Disabled Text",
-                    ZIndex = 9,
-                    Outline = true,
-                    Parent = dropdown
-                })
-
-                local icon = utility.create("Text", {
-                    Text = "+",
-                    Font = Drawing.Fonts.Plex,
-                    Size = 13,
-                    Position = UDim2.new(1, -13, 0, 0),
-                    Theme = "Text",
-                    ZIndex = 9,
-                    Outline = true,
-                    Parent = dropdown
-                })
-
-                local contentframe = utility.create("Square", {
-                    Filled = true,
-                    Visible = false,
-                    Thickness = 0,
-                    Theme = "Object Background",
-                    Size = UDim2.new(1, 0, 0, 0),
-                    Position = UDim2.new(0, 0, 1, 6),
-                    ZIndex = 12,
-                    Parent = dropdown
-                })
-
-                utility.outline(contentframe, "Object Border")
-
-                utility.create("Image", {
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Transparency = 0.5,
-                    ZIndex = 13,
-                    Parent = contentframe,
-                    Data = library.gradient
-                })
-
-
-                local contentholder = utility.create("Square", {
-                    Transparency = 0,
-                    Size = UDim2.new(1, -6, 1, -6),
-                    Position = UDim2.new(0, 3, 0, 3),
-                    Parent = contentframe
-                })
-
-                if scrollable then
-                    contentholder:MakeScrollable()
-                end
-
-                contentholder:AddListLayout(3)
 
                 section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
-                local mouseover = false
-
-                dropdown.MouseEnter:Connect(function()
-                    mouseover = true
-                    dropdown.Color = utility.changecolor(library.theme["Object Background"], 3)
-                end)
-
-                dropdown.MouseLeave:Connect(function()
-                    mouseover = false
-                    dropdown.Color = library.theme["Object Background"]
-                end)
-
-                dropdown.MouseButton1Down:Connect(function()
-                    dropdown.Color = utility.changecolor(library.theme["Object Background"], 6)
-                end)
-
-                dropdown.MouseButton1Up:Connect(function()
-                    dropdown.Color = mouseover and utility.changecolor(library.theme["Object Background"], 3) or library.theme["Object Background"]
-                end)
-
-                local opened = false
-
-                dropdown.MouseButton1Click:Connect(function()
-                    opened = not opened
-                    contentframe.Visible = opened
-                    icon.Text = opened and "-" or "+"
-                end)
-
-                local optioninstances = {}
-                local count = 0
-                local countindex = {}
-                
-                local function createoption(name)
-                    optioninstances[name] = {}
-
-                    countindex[name] = count + 1
-
-                    local button = utility.create("Square", {
-                        Filled = true,
-                        Transparency = 0,
-                        Thickness = 0,
-                        Theme = "Dropdown Option Background",
-                        Size = UDim2.new(1, 0, 0, 16),
-                        ZIndex = 14,
-                        Parent = contentholder
-                    })
-
-                    optioninstances[name].button = button
-
-                    local title = utility.create("Text", {
-                        Text = name,
-                        Font = Drawing.Fonts.Plex,
-                        Size = 13,
-                        Position = UDim2.new(0, 8, 0, 1),
-                        Theme = "Disabled Text",
-                        ZIndex = 15,
-                        Outline = true,
-                        Parent = button
-                    })
-
-                    optioninstances[name].text = title
-
-                    if scrollable then
-                        if count < scrollingmax then
-                            contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
-                        end
-                    else
-                        contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
-                    end
-
-                    count = count + 1
-
-                    return button, title
-                end
-
-                local chosen = max and {}
-
-                local function handleoptionclick(option, button, text)
-                    button.MouseButton1Click:Connect(function()
-                        if max then
-                            if table.find(chosen, option) then
-                                table.remove(chosen, table.find(chosen, option))
-
-                                local textchosen = {}
-                                local cutobject = false
-
-                                for _, opt in next, chosen do
-                                    table.insert(textchosen, opt)
-
-                                    if utility.textlength(table.concat(textchosen, ", ") .. ", ...", Drawing.Fonts.Plex, 13).X > (dropdown.AbsoluteSize.X - 18) then
-                                        cutobject = true
-                                        table.remove(textchosen, #textchosen)
-                                    end
-                                end
-
-                                value.Text = #chosen == 0 and "NONE" or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
-                                utility.changeobjecttheme(value, #chosen == 0 and "Disabled Text" or "Text")
-
-                                button.Transparency = 0
-                                utility.changeobjecttheme(text, "Disabled Text")
-
-                                library.flags[flag] = chosen
-                                callback(chosen)
-                            else
-                                if #chosen == max then
-                                    optioninstances[chosen[1]].button.Transparency = 0
-                                    utility.changeobjecttheme(optioninstances[chosen[1]].text, "Disabled Text")
-
-                                    table.remove(chosen, 1)
-                                end
-
-                                table.insert(chosen, option)
-
-                                local textchosen = {}
-                                local cutobject = false
-
-                                for _, opt in next, chosen do
-                                    table.insert(textchosen, opt)
-
-                                    if utility.textlength(table.concat(textchosen, ", ") .. ", ...", Drawing.Fonts.Plex, 13).X > (dropdown.AbsoluteSize.X - 18) then
-                                        cutobject = true
-                                        table.remove(textchosen, #textchosen)
-                                    end
-                                end
-
-                                value.Text = #chosen == 0 and "NONE" or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
-                                utility.changeobjecttheme(value, #chosen == 0 and "Disabled Text" or "Text")
-
-                                button.Transparency = 1
-                                utility.changeobjecttheme(text, "Text")
-
-                                library.flags[flag] = chosen
-                                callback(chosen)
-                            end
-                        else
-                            for opt, tbl in next, optioninstances do
-                                if opt ~= option then
-                                    tbl.button.Transparency = 0
-                                    utility.changeobjecttheme(tbl.text, "Disabled Text")
-                                end
-                            end
-
-                            if chosen == option then
-                                chosen = nil
-
-                                value.Text = "NONE"
-                                utility.changeobjecttheme(value, "Disabled Text")
-
-                                button.Transparency = 0
-
-                                utility.changeobjecttheme(text, "Disabled Text")
-
-                                library.flags[flag] = nil
-                                callback(nil)
-                            else
-                                chosen = option
-
-                                value.Text = option
-                                utility.changeobjecttheme(value, "Text")
-
-                                button.Transparency = 1
-                                utility.changeobjecttheme(text, "Text")
-
-                                library.flags[flag] = option
-                                callback(option)
-                            end
-                        end
-                    end)
-                end
-
-                local function createoptions(tbl)
-                    for _, option in next, tbl do
-                        local button, text = createoption(option)
-                        handleoptionclick(option, button, text)
-                    end
-                end
-
-                createoptions(content)
-
-                local set
-                set = function(option)
-                    if max then
-                        option = type(option) == "table" and option or {}
-                        table.clear(chosen)
-
-                        for opt, tbl in next, optioninstances do
-                            if not table.find(option, opt) then
-                                tbl.button.Transparency = 0
-                                utility.changeobjecttheme(tbl.text, "Disabled Text")
-                            end
-                        end
-
-                        for i, opt in next, option do
-                            if table.find(content, opt) and #chosen < max then
-                                table.insert(chosen, opt)
-                                optioninstances[opt].button.Transparency = 1
-                                utility.changeobjecttheme(optioninstances[opt].text, "Text")
-                            end
-                        end
-
-                        local textchosen = {}
-                        local cutobject = false
-
-                        for _, opt in next, chosen do
-                            table.insert(textchosen, opt)
-
-                            if utility.textlength(table.concat(textchosen, ", ") .. ", ...", Drawing.Fonts.Plex, 13).X > (dropdown.AbsoluteSize.X - 6) then
-                                cutobject = true
-                                table.remove(textchosen, #textchosen)
-                            end
-                        end
-
-                        value.Text = #chosen == 0 and "NONE" or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
-                        utility.changeobjecttheme(value, #chosen == 0 and "Disabled Text" or "Text")
-
-                        library.flags[flag] = chosen
-                        callback(chosen)
-                    end
-                    
-                    if not max then
-                        for opt, tbl in next, optioninstances do
-                            if opt ~= option then
-                                tbl.button.Transparency = 0
-                                utility.changeobjecttheme(tbl.text, "Disabled Text")
-                            end
-                        end
-
-                        if table.find(content, option) then
-                            chosen = option
-
-                            value.Text = option
-                            utility.changeobjecttheme(value, "Text")
-
-                            optioninstances[option].button.Transparency = 1
-                            utility.changeobjecttheme(optioninstances[option].text, "Text")
-
-                            library.flags[flag] = chosen
-                            callback(chosen)
-                        else
-                            chosen = nil
-
-                            value.Text = "NONE"
-                            utility.changeobjecttheme(value, "Disabled Text")
-
-                            library.flags[flag] = chosen
-                            callback(chosen)
-                        end
-                    end
-                end
-
-                flags[flag] = set
-
-                set(default)
-
-                local dropdowntypes = utility.table({}, true)
-
-                function dropdowntypes:Set(option)
-                    set(option)
-                end
-
-                function dropdowntypes:Refresh(tbl)
-                    content = table.clone(tbl)
-                    count = 0
-
-                    for _, opt in next, optioninstances do
-                        opt.button:Remove()
-                    end
-
-                    table.clear(optioninstances)
-
-                    value.Text = "NONE"
-                    utility.changeobjecttheme(value, "Disabled Text")
-
-                    if max then
-                        table.clear(chosen)
-                    else
-                        chosen = nil
-                    end
-
-                    createoptions(tbl)
-                    
-                    library.flags[flag] = chosen
-                    callback(chosen)
-                end
-
-                function dropdowntypes:Add(option)
-                    table.insert(content, option)
-                    local button, text = createoption(option)
-                    handleoptionclick(option, button, text)
-                end
-
-                function dropdowntypes:Remove(option)
-                    if optioninstances[option] then
-                        count = count - 1
-
-                        optioninstances[option].button:Remove()
- 
-                        if scrollable then
-                            contentframe.Size = UDim2.new(1, 0, 0, math.clamp(contentholder.AbsoluteContentSize, 0, (scrollingmax * 16) + ((scrollingmax - 1) * 3)) + 6)
-                        else
-                            contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
-                        end
-
-                        optioninstances[option] = nil
-
-                        if max then
-                            if table.find(chosen, option) then
-                                table.remove(chosen, table.find(chosen, option))
-
-                                local textchosen = {}
-                                local cutobject = false
-        
-                                for _, opt in next, chosen do
-                                    table.insert(textchosen, opt)
-        
-                                    if utility.textlength(table.concat(textchosen, ", ") .. ", ...", Drawing.Fonts.Plex, 13).X > (dropdown.AbsoluteSize.X - 6) then
-                                        cutobject = true
-                                        table.remove(textchosen, #textchosen)
-                                    end
-                                end
-        
-                                value.Text = #chosen == 0 and "NONE" or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
-                                utility.changeobjecttheme(value, #chosen == 0 and "Disabled Text" or "Text")
-
-                                library.flags[flag] = chosen
-                                callback(chosen)
-                            end
-                        else
-                            if chosen == option then
-                                chosen = nil
-
-                                value.Text = "NONE"
-                                utility.changeobjecttheme(value, "Disabled Text")
-
-                                library.flags[flag] = chosen
-                                callback(chosen)
-                            end
-                        end
-                    end
-                end
-
-                return dropdowntypes
+                return library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax)
             end
 
             function sectiontypes:ColorPicker(options)
