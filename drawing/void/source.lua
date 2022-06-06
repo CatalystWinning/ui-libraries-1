@@ -2379,7 +2379,7 @@ function library.createcolorpicker(default, defaultalpha, parent, count, flag, c
             local values = str:split(", ")
             local r, g, b = math.clamp(values[1]:gsub("%D+", ""), 0, 255), math.clamp(values[2]:gsub("%D+", ""), 0, 255), math.clamp(values[3]:gsub("%D+", ""), 0, 255)
 
-            set(Color3.fromRGB(r, g, b))
+            set(Color3.fromRGB(r, g, b), alpha or defaultalpha)
         else
             placeholdertext.Visible = false
             text.Visible = true
