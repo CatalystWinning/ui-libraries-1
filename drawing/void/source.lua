@@ -2,9 +2,19 @@
 
 local drawing = {} do
     local services = setmetatable({}, {
-        __index = function(_, k)
-            k = (k == "InputService" and "UserInputService") or k
-            return game:GetService(k)
+        __index = function(self, key)
+            if key == "InputService" then
+                key = "UserInputService"
+            end
+            
+            if not rawget(self, key) then
+                local service = game:GetService(key)
+                rawset(self, service, service)
+    
+                return service
+            end
+        
+            return rawget(self, key)
         end
     })
 
@@ -138,8 +148,9 @@ local drawing = {} do
     local function ismouseover(obj)
         local posX, posY = obj.Position.X, obj.Position.Y
         local sizeX, sizeY = posX + obj.Size.X, posY + obj.Size.Y
+        local mousepos = services.InputService:GetMouseLocation()
 
-        if services.InputService:GetMouseLocation().X >= posX and services.InputService:GetMouseLocation().Y >= posY and services.InputService:GetMouseLocation().X <= sizeX and services.InputService:GetMouseLocation().Y <= sizeY then
+        if mousepos.X >= posX and mousepos.Y >= posY and mousepos.X <= sizeX and mousepos.Y <= sizeY then
             return true
         end
 
@@ -254,8 +265,8 @@ local drawing = {} do
 
     services.InputService.InputChanged:Connect(function(input, gpe)
         for obj, signals in next, objsignals do
-            if objexists[obj] then
-                if ismouseover(obj) and obj.Visible then
+            if objexists[obj] and obj.Visible and (signals.MouseEnter or signals.MouseMove or signals.InputChanged or signals.MouseLeave) then
+                if ismouseover(obj) then
                     if not signals.mouseentered then
                         signals.mouseentered = true
 
