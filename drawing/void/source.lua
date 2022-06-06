@@ -2395,7 +2395,7 @@ function library.createcolorpicker(default, defaultalpha, parent, count, flag, c
 
         saturationpicker.Position = UDim2.new(0, posX, 0, posY)
 
-        set(Color3.fromHSV(curhuesizey or hue, sizeX, sizeY), alpha, true)
+        set(Color3.fromHSV(curhuesizey or hue, sizeX, sizeY), alpha or defaultalpha, true)
     end
 
     local slidingsaturation = false
@@ -2423,7 +2423,7 @@ function library.createcolorpicker(default, defaultalpha, parent, count, flag, c
         saturation.Color = Color3.fromHSV(sizeX, 1, 1)
         curhuesizey = sizeX
 
-        set(Color3.fromHSV(sizeX, sat, val), alpha, true)
+        set(Color3.fromHSV(sizeX, sat, val), alpha or defaultalpha, true)
     end
 
     hueframe.InputBegan:Connect(function(input)
