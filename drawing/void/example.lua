@@ -1,4 +1,4 @@
-local watermark = library:Watermark("Watermark")
+local watermark = library:Watermark("watermark | 60 fps | v4.20 | dev")
 -- watermark:Set("Watermark Set")
 -- watermark:Hide() -- toggles watermark
 
