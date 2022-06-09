@@ -1,4 +1,6 @@
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/vozoid/ui-libraries/main/drawing/void/source.lua"))()
+local watermark = library:Watermark("Watermark")
+-- watermark:Set("Watermark Set")
+-- watermark:Hide() -- toggles watermark
 
 local main = library:Load{
     Name = "vozoid hax or something",
