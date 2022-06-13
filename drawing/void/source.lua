@@ -1556,9 +1556,10 @@ function library.createbox(box, text, callback, finishedcallback)
     end)
 end
 
-function library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax)
+function library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax, islist)
     local dropdown = utility.create("Square", {
         Filled = true,
+        Visible = not islist,
         Thickness = 0,
         Theme = "Object Background",
         Size = UDim2.new(1, 0, 0, 14),
@@ -1601,13 +1602,13 @@ function library.createdropdown(holder, content, flag, callback, default, max, s
 
     local contentframe = utility.create("Square", {
         Filled = true,
-        Visible = false,
+        Visible = islist or false,
         Thickness = 0,
         Theme = "Object Background",
         Size = UDim2.new(1, 0, 0, 0),
-        Position = UDim2.new(0, 0, 1, 6),
+        Position = islist and UDim2.new(0, 0, 0, 14) or UDim2.new(0, 0, 1, 6),
         ZIndex = 12,
-        Parent = dropdown
+        Parent = islist and holder or dropdown
     })
 
     utility.outline(contentframe, "Object Border")
@@ -1656,11 +1657,13 @@ function library.createdropdown(holder, content, flag, callback, default, max, s
 
     local opened = false
 
-    dropdown.MouseButton1Click:Connect(function()
-        opened = not opened
-        contentframe.Visible = opened
-        icon.Text = opened and "-" or "+"
-    end)
+    if not islist then
+        dropdown.MouseButton1Click:Connect(function()
+            opened = not opened
+            contentframe.Visible = opened
+            icon.Text = opened and "-" or "+"
+        end)
+    end
 
     local optioninstances = {}
     local count = 0
@@ -1699,9 +1702,17 @@ function library.createdropdown(holder, content, flag, callback, default, max, s
         if scrollable then
             if count < scrollingmax then
                 contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
+
+                if islist then
+                    holder.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 16)
+                end
             end
         else
             contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
+
+            if islist then
+                holder.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 16)
+            end
         end
 
         count = count + 1
@@ -3604,6 +3615,65 @@ function library:Load(options)
                 section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
                 return library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax)
+            end
+
+            function sectiontypes:List(options)
+                utility.table(options)
+                local name = options.name
+                local default = options.default
+                local content = type(options.content) == "table" and options.content or {}
+                local max = options.max and (options.max > 1 and options.max) or nil
+                local scrollable = options.scrollable
+                local scrollingmax = options.scrollingmax or 10
+                local flag = options.flag or utility.nextflag()
+                local callback = options.callback or function() end
+
+                if not max and type(default) == "table" then
+                    default = nil
+                end
+
+                if max and default == nil then
+                    default = {}
+                end
+
+                if type(default) == "table" then
+                    if max then
+                        for i, opt in next, default do
+                            if not table.find(content, opt) then
+                                table.remove(default, i)
+                            elseif i > max then
+                                table.remove(default, i)
+                            end
+                        end
+                    else
+                        default = nil
+                    end
+                elseif default ~= nil then
+                    if not table.find(content, default) then
+                        default = nil
+                    end
+                end
+
+                local holder = utility.create("Square", {
+                    Transparency = 0,
+                    Size = UDim2.new(1, 0, 0, 29),
+                    Parent = sectioncontent
+                })
+
+                local title = utility.create("Text", {
+                    Text = name,
+                    Font = Drawing.Fonts.Plex,
+                    Size = 13,
+                    Position = UDim2.new(0, 0, 0, -2),
+                    Theme = "Text",
+                    ZIndex = 7,
+                    Outline = true,
+                    Parent = holder
+                })
+
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
+
+                return library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax, true)
             end
 
             function sectiontypes:ColorPicker(options)
