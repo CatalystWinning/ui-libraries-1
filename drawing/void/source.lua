@@ -330,6 +330,7 @@ local drawing = {} do
 
         local listfunc
         local scrollfunc
+        local refreshscrolling
 
         objconnections[obj] = {}
 
@@ -443,6 +444,14 @@ local drawing = {} do
                                 end
                             end
                         end
+
+                        return docontinue
+                    end
+
+                    refreshscrolling = function()
+                        repeat
+                        until
+                            not scroll(-1)
                     end
 
                     self.InputChanged:Connect(function(input)
@@ -528,6 +537,10 @@ local drawing = {} do
 
                 if k == "MakeScrollable" and scrollfunc then
                     return scrollfunc
+                end
+
+                if k == "RefreshScrolling" and refreshscrolling then
+                    return refreshscrolling
                 end
 
                 if k == "AbsoluteContentSize" then
@@ -1556,7 +1569,7 @@ function library.createbox(box, text, callback, finishedcallback)
     end)
 end
 
-function library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax, islist)
+function library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax, islist, section, sectioncontent)
     local dropdown = utility.create("Square", {
         Filled = true,
         Visible = not islist,
@@ -1704,14 +1717,16 @@ function library.createdropdown(holder, content, flag, callback, default, max, s
                 contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
 
                 if islist then
-                    holder.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 16)
+                    holder.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 20)
+                    section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
                 end
             end
         else
             contentframe.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 6)
 
             if islist then
-                holder.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 16)
+                holder.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 20)
+                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
             end
         end
 
@@ -1910,10 +1925,18 @@ function library.createdropdown(holder, content, flag, callback, default, max, s
         count = 0
 
         for _, opt in next, optioninstances do
-            opt.button:Remove()
+            coroutine.wrap(function()
+                opt.button:Remove()
+            end)()
         end
 
         table.clear(optioninstances)
+
+        createoptions(tbl)
+
+        if scrollable then
+            contentholder:RefreshScrolling() 
+        end
 
         value.Text = "NONE"
         utility.changeobjecttheme(value, "Disabled Text")
@@ -1923,8 +1946,6 @@ function library.createdropdown(holder, content, flag, callback, default, max, s
         else
             chosen = nil
         end
-
-        createoptions(tbl)
         
         library.flags[flag] = chosen
         callback(chosen)
@@ -3673,7 +3694,7 @@ function library:Load(options)
 
                 section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
-                return library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax, true)
+                return library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax, true, section, sectioncontent)
             end
 
             function sectiontypes:ColorPicker(options)
