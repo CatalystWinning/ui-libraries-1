@@ -2357,13 +2357,13 @@ function library.createcolorpicker(default, defaultalpha, parent, count, flag, c
 
     local function set(color, a, nopos)
         if type(color) == "table" then
-            a = color.alpha
+            a = color.alpha or 1
             color = Color3.fromHex(color.color)
         end
 
         if type(color) == "string" then
-            color = Color3.fromHex(color)
             a = 1
+            color = Color3.fromHex(color)
         end
 
         local oldcolor = hsv
