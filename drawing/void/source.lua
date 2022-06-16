@@ -2357,12 +2357,10 @@ function library.createcolorpicker(default, defaultalpha, parent, count, flag, c
 
     local function set(color, a, nopos)
         if type(color) == "table" then
-            a = color.alpha or 1
             color = Color3.fromHex(color.color)
         end
 
         if type(color) == "string" then
-            a = 1
             color = Color3.fromHex(color)
         end
 
@@ -2370,7 +2368,7 @@ function library.createcolorpicker(default, defaultalpha, parent, count, flag, c
         local oldalpha = alpha
 
         hue, sat, val = color:ToHSV()
-        alpha = a
+        alpha = a or 1
         hsv = Color3.fromHSV(hue, sat, val)
 
         if hsv ~= oldcolor or alpha ~= oldalpha then
