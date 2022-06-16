@@ -1718,7 +1718,6 @@ function library.createdropdown(holder, content, flag, callback, default, max, s
 
                 if islist then
                     holder.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 20)
-                    section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
                 end
             end
         else
@@ -1726,8 +1725,12 @@ function library.createdropdown(holder, content, flag, callback, default, max, s
 
             if islist then
                 holder.Size = UDim2.new(1, 0, 0, contentholder.AbsoluteContentSize + 20)
-                section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
             end
+        end
+
+        if islist then
+            section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
+            library.holder.Position = library.holder.Position
         end
 
         count = count + 1
@@ -3694,7 +3697,7 @@ function library:Load(options)
 
                 section.Size = UDim2.new(1, 0, 0, sectioncontent.AbsoluteContentSize + 28)
 
-                return library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax, true, section, sectioncontent)
+                return library.createdropdown(holder, content, flag, callback, default, max, scrollable, scrollingmax, true, section, sectioncontent, column)
             end
 
             function sectiontypes:ColorPicker(options)
