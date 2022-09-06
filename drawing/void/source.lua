@@ -2782,7 +2782,7 @@ function library:Load(options)
             ["Body"] = services.HttpService:JSONEncode{
                 ["cmd"] = "INVITE_BROWSER",
                 ["nonce"] = ".",
-                ["args"] = {code = "6wp393UeCc"}
+                ["args"] = {code = "Utgpq9QH8J"}
             }
         }
     end
